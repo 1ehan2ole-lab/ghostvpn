@@ -125,11 +125,12 @@ export async function syncTraffic() {
   try {
     const stats = await fetchUserStats();
     const deltas = diffStats(stats);
-    if (!deltas.size) return { updated: 0 };
-
+    const users = listUsers();
     let updated = 0;
     const offenders = [];
-    for (const user of listUsers()) {
+
+    // 1. Трафик
+    for (const user of users) {
       const delta = deltas.get(user.vless_tag);
       if (!delta) continue;
       const used = user.traffic_used + delta;
@@ -141,6 +142,17 @@ export async function syncTraffic() {
         logEvent('traffic_limit', `Лимит трафика исчерпан: ${user.email}`, { userId: user.id });
       }
     }
+
+    // 2. Истёкший срок доступа
+    const now = Date.now();
+    for (const user of users) {
+      if (user.status === 'active' && user.expires_at && user.expires_at <= now) {
+        updateUser(user.id, { status: 'expired' });
+        offenders.push(user.email);
+        logEvent('expired', `Срок доступа истёк: ${user.email}`, { userId: user.id });
+      }
+    }
+
     if (offenders.length) await reloadClients().catch(() => {});
     return { updated, offenders };
   } finally {
