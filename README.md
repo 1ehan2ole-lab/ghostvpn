@@ -246,6 +246,15 @@ Workflow `.github/workflows/deploy-pages.yml` собирает папку `web/`
 
 Сборка: `clients/README.md`, workflow-файлы `.github/workflows/client-*.yml`.
 
+Готовые сборки — в релиз��х GitHub: **https://github.com/1ehan2ole-lab/ghostvpn/releases**
+
+| Файл | Платформа |
+|---|---|
+| `GhostVPN-Windows-x64.zip` | Windows (клиент + ядро sing-box + консольный клиент) |
+| `GhostVPN-macOS-arm64.dmg` | macOS (Apple Silicon) |
+| `GhostVPN-Android-arm64.apk` | Android (ядро sing-box + tun2socks внутри) |
+| исходники `clients/GhostVPN.Apple` | iOS (сборка `.ipa` — вручную, нужен Apple Developer ID) |
+
 ```bash
 # Windows
 dotnet publish clients/GhostVPN.Windows/GhostVPN.Windows.csproj -c Release -r win-x64 \
