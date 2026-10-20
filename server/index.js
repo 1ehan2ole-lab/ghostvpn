@@ -50,6 +50,7 @@ export function createApp() {
 
   // Канонический хост: 127.0.0.1 и localhost должны давать одну и ту же сессию,
   // иначе cookie из одного адреса не подходит другому и пользователя "кидает" на логин.
+  // API и подписки не трогаем - их забирают клиенты по точному адресу.
   app.use((req, res, next) => {
     const host = String(req.headers.host || '');
     const port = config.port;
@@ -68,7 +69,8 @@ export function createApp() {
       canonical = `localhost:${port}`;
     }
 
-    if (canonical && req.method === 'GET' && !req.path.startsWith('/api/')) {
+    const isApiLike = req.path.startsWith('/api/') || req.path.startsWith('/sub/');
+    if (canonical && req.method === 'GET' && !isApiLike) {
       const target = `${req.protocol}://${canonical}${req.originalUrl}`;
       if (target !== `${req.protocol}://${host}${req.originalUrl}`) {
         return res.redirect(301, target);

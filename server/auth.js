@@ -28,13 +28,27 @@ export function issueSession(user, req, res) {
     ip: clientIp(req),
     userAgent: String(req.headers['user-agent'] || '').slice(0, 300),
   });
-  res.cookie(SESSION_COOKIE, id, {
+
+  const base = {
     httpOnly: true,
     sameSite: 'lax',
     secure: isSecure(req),
     maxAge: config.sessionTtlMs,
     path: '/',
-  });
+  };
+
+  res.cookie(SESSION_COOKIE, id, base);
+
+  // Локальная установка: 127.0.0.1 и localhost - разные cookie-домены.
+  // Дублируем cookie, чтобы сессия не терялась при переходе между ними.
+  const hostname = String(req.headers.host || '').split(':')[0];
+  if (hostname === '127.0.0.1' || hostname === '[::1]') {
+    res.cookie(SESSION_COOKIE, id, { ...base, domain: 'localhost' });
+  }
+  if (hostname === 'localhost') {
+    res.cookie(SESSION_COOKIE, id, { ...base, domain: 'localhost' });
+  }
+
   return { id, expiresAt };
 }
 
