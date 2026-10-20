@@ -10,6 +10,43 @@
 import { config } from './config.js';
 import { rt } from './runtime.js';
 import { sha256 } from './util.js';
+import os from 'node:os';
+
+/** Локальные адреса, для которых ищем IP этой машины в сети. */
+function isLocalHost(hostname) {
+  return ['localhost', '127.0.0.1', '[::1]', '0.0.0.0'].includes(String(hostname).toLowerCase());
+}
+
+/** IP-адрес машины в локальной сети (для ключей, которыми пользуются с телефона). */
+let cachedLanIp = null;
+let cachedLanAt = 0;
+
+export function detectLanIp() {
+  if (cachedLanIp && Date.now() - cachedLanAt < 60000) return cachedLanIp;
+  const nets = os.networkInterfaces();
+  const candidates = [];
+  for (const list of Object.values(nets)) {
+    for (const net of list || []) {
+      if (net.family !== 'IPv4' && net.family !== 4) continue;
+      if (net.internal) continue;
+      candidates.push(net.address);
+    }
+  }
+  if (!candidates.length) return null;
+
+  // Приоритет: адреса локальной сети (RFC1918), потом остальные.
+  // Так мы не подставим адрес VPN-адаптера (Radmin/OpenVPN и т.п.).
+  const isPrivate = (ip) =>
+    /^10\./.test(ip) ||
+    /^192\.168\./.test(ip) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(ip);
+
+  candidates.sort((a, b) => (isPrivate(b) ? 1 : 0) - (isPrivate(a) ? 1 : 0));
+
+  cachedLanIp = candidates[0];
+  cachedLanAt = Date.now();
+  return cachedLanIp;
+}
 
 export function getPublicHost(req, { port } = {}) {
   const configured = rt().publicUrl;
@@ -34,11 +71,16 @@ export function getPublicHost(req, { port } = {}) {
     const host = req.headers['x-forwarded-host'] || req.headers.host;
     if (host) {
       const value = String(host).split(',')[0].trim();
-      if (value.startsWith('[')) return value; // IPv6 literal
-      return value.split(':')[0];
+      const hostname = value.startsWith('[') ? value : value.split(':')[0];
+      if (isLocalHost(hostname)) {
+        // localhost в ключе бесполезен для телефона - подставляем IP в сети
+        const lan = detectLanIp();
+        if (lan) return lan;
+      }
+      return hostname;
     }
   }
-  return '127.0.0.1';
+  return detectLanIp() || '127.0.0.1';
 }
 
 /** Build a single vless:// REALITY link. */

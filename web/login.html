@@ -21,6 +21,14 @@
 
       <div class="alert alert-error" id="alert"></div>
 
+      <div class="alert alert-info hidden" id="alreadyIn">
+        <span id="alreadyInText"></span>
+        <a href="/dashboard" id="goCabinet" style="color:var(--brand-2)">В кабинет →</a>
+        <div style="margin-top:6px">
+          <button type="button" class="btn btn-ghost btn-sm" id="switchAccount">Войти как другой пользователь</button>
+        </div>
+      </div>
+
       <form id="loginForm" autocomplete="on">
         <div class="field">
           <label for="login">Логин</label>
@@ -51,11 +59,17 @@
   const alertBox = document.getElementById('alert');
   const btn = document.getElementById('submitBtn');
 
-  // Если сессия уже есть - сразу в кабинет, без лишнего логина.
+  // Если сессия уже есть - предлагаем кабинет, но не мешаем войти другим аккаунтом.
+  let sessionUser = null;
   Ghost.loadSession().then(function (user) {
     if (!user) return;
-    const next = safeNext();
-    location.replace(next || (user.role === 'admin' ? '/admin' : '/dashboard'));
+    sessionUser = user;
+    const box = document.getElementById('alreadyIn');
+    box.classList.remove('hidden');
+    document.getElementById('alreadyInText').textContent =
+      'Вы вошли как ' + user.email + '.';
+    document.getElementById('goCabinet').href =
+      user.role === 'admin' ? '/admin' : '/dashboard';
   });
 
   // Принимаем только внутренние пути (защита от open redirect).
@@ -89,6 +103,12 @@
       btn.disabled = false;
       btn.textContent = 'Войти';
     }
+  });
+
+  document.getElementById('switchAccount').addEventListener('click', async function () {
+    await Ghost.api('/api/auth/logout', { method: 'POST' });
+    document.getElementById('alreadyIn').classList.add('hidden');
+    document.getElementById('login').focus();
   });
 })();
 </script>

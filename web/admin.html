@@ -299,6 +299,17 @@
         <dl class="kv" id="realityInfo"></dl>
       </div>
       <div class="card">
+        <h2 style="font-size:1.15rem">Адреса ноды</h2>
+        <p class="small">Адрес, который попадёт в ключи и подписки. Клиент с телефона или другого ПК
+          не сможет подключиться к «localhost» — укажите тут IP в сети или свой домен.</p>
+        <dl class="kv" id="networkInfo"></dl>
+        <div class="row gap-sm mt-2">
+          <button class="btn btn-ghost btn-sm" id="useLanBtn">Использовать IP в сети</button>
+          <button class="btn btn-ghost btn-sm" id="copyAddrBtn">Скопировать</button>
+        </div>
+      </div>
+
+      <div class="card">
         <h2 style="font-size:1.15rem">Проверка ноды</h2>
         <p class="small">Проверяет доступность YouTube и других сервисов с IP-адреса сервера.</p>
         <button class="btn btn-ghost" id="nodeCheckBtn">Проверить доступность</button>

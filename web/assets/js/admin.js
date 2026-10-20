@@ -460,7 +460,7 @@
       if (name === 'settings') await loadSettings();
       if (name === 'invites') await loadInvites();
       if (name === 'events') await loadEvents();
-      if (name === 'server') await loadServer();
+      if (name === 'server') { await loadServer(); await loadNetwork(); }
     });
   });
 
@@ -497,6 +497,31 @@
     } catch (err) {
       Ghost.toast(err.message, 'err');
     }
+  });
+
+  async function loadNetwork() {
+    const res = await Ghost.api('/api/admin/network');
+    document.getElementById('networkInfo').innerHTML = [
+      ['IP в локальной сети', res.lanIp || '—'],
+      ['Текущий адрес панели', res.publicUrl || res.host || '—'],
+      ['Адрес в ключах сейчас', res.publicUrl || res.lanIp || res.serverHost || res.host],
+      ['Порт VPN', res.serverPort],
+    ].map((p) => '<dt>' + p[0] + '</dt><dd class="mono">' + Ghost.escape(String(p[1])) + '</dd>').join('');
+    document.getElementById('useLanBtn').dataset.value = res.lanIp || '';
+  }
+
+  document.getElementById('useLanBtn').addEventListener('click', function () {
+    const value = this.dataset.value;
+    if (!value) { Ghost.toast('IP в сети не найден', 'err'); return; }
+    const field = document.getElementById('set_public');
+    field.value = 'http://' + value + ':8080';
+    Ghost.toast('Нажмите «Сохранить настройки»', 'ok');
+    document.getElementById('set_public').focus();
+  });
+
+  document.getElementById('copyAddrBtn').addEventListener('click', async function () {
+    const res = await Ghost.api('/api/admin/network');
+    Ghost.copy(res.publicUrl || res.lanIp || res.host, 'Адрес скопирован');
   });
 
   document.getElementById('nodeCheckBtn').addEventListener('click', async function () {

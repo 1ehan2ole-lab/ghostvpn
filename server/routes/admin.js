@@ -28,6 +28,7 @@ import {
  } from '../service.js';
 import { GB, randomTag, randomUuid, toGb } from '../util.js';
 import { buildSubToken, buildUserLinks } from '../subscription.js';
+import { detectLanIp } from '../subscription.js';
 import {
   ensureRealityKeys,
   isRunning,
@@ -439,6 +440,24 @@ router.get('/node-check', async (req, res) => {
       ? 'YouTube недоступен с ноды: IP сервера заблокирован Google или провайдером. ' +
         'Решения: другой IP/VPS, другой REALITY dest, либо проверьте QUIC в настройках.'
       : 'YouTube с ноды доступен.',
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Network addresses                                                   */
+/* ------------------------------------------------------------------ */
+
+/** GET /api/admin/network - адреса, которые можно использовать в ключах. */
+router.get('/network', (req, res) => {
+  const lanIp = detectLanIp();
+  res.json({
+    ok: true,
+    lanIp,
+    publicUrl: rt().publicUrl || '',
+    serverHost: config.serverHost || '',
+    serverPort: rt().serverPort,
+    host: String(req.headers.host || ''),
+    suggested: rt().publicUrl || lanIp || config.serverHost || String(req.headers.host || ''),
   });
 });
 
