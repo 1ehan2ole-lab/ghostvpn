@@ -10,13 +10,38 @@
 
   // Базовый URL API. Пустая строка = тот же домен. Для статической
   // публикации (GitHub Pages) задаётся в web/config.js.
-  const API_BASE = String(window.GHOSTVPN_API_BASE || '').replace(/\/+$/, '');
+  let apiBase = String(window.GHOSTVPN_API_BASE || '').replace(/\/+$/, '');
+
+  /**
+   * Подтягивает актуальный config.js (обход кэша статики) и вычисляет
+   * базовый URL API и адрес панели.
+   */
+  async function initConfig() {
+    if (typeof window.GHOSTVPN_API_BASE === 'undefined') {
+      try {
+        const res = await fetch('config.js?v=' + Date.now(), { cache: 'no-store' });
+        const text = await res.text();
+        const api = text.match(/GHOSTVPN_API_BASE\s*=\s*'([^']*)'/);
+        const panel = text.match(/GHOSTVPN_PANEL_URL\s*=\s*'([^']*)'/);
+        if (api) window.GHOSTVPN_API_BASE = api[1];
+        if (panel) window.GHOSTVPN_PANEL_URL = panel[1];
+      } catch (e) {
+        /* статика недоступна - работаем на текущем домене */
+      }
+    }
+    apiBase = String(window.GHOSTVPN_API_BASE || '').replace(/\/+$/, '');
+    return apiBase;
+  }
 
   Ghost.url = function (pathname) {
-    return API_BASE + pathname;
+    return apiBase + pathname;
   };
 
+  let configReady = null;
+
   Ghost.api = async function (path, options) {
+    if (!configReady) configReady = initConfig();
+    await configReady;
     const opts = Object.assign({ credentials: 'same-origin', headers: {} }, options || {});
     opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers);
     if (opts.body && typeof opts.body !== 'string') {
@@ -142,6 +167,8 @@
   window.Ghost = Ghost;
 
   document.addEventListener('DOMContentLoaded', async function () {
+    await initConfig();
+
     // Если сайт опубликован отдельно от панели - перенаправляем внутренние ссылки.
     const panelUrl = String(window.GHOSTVPN_PANEL_URL || '').replace(/\/+$/, '');
     if (panelUrl && panelUrl !== location.origin) {
