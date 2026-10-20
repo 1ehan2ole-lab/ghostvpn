@@ -4,7 +4,7 @@
 
 **Полноценная VPN-панель: сайт, аккаунты, персональные ключи и подписки.**
 
-[![CI](https://github.com/<user>/ghostvpn/actions/workflows/ci.yml/badge.svg)](https://github.com/<user>/ghostvpn/actions/workflows/ci.yml)
+[![CI](https://github.com/1ehan2ole-lab/ghostvpn/actions/workflows/ci.yml/badge.svg)](https://github.com/1ehan2ole-lab/ghostvpn/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D22.5-3fa737?logo=node.js)](https://nodejs.org)
 
@@ -38,7 +38,7 @@ GhostVPN — self-hosted VPN-сервис на базе ядра [Xray-core](htt
 ### Вариант 1 — Docker (рекомендуется)
 
 ```bash
-git clone https://github.com/<user>/ghostvpn.git
+git clone https://github.com/1ehan2ole-lab/ghostvpn.git
 cd ghostvpn
 cp .env.example .env
 nano .env            # задайте ADMIN_EMAIL, ADMIN_PASSWORD, SERVER_PORT
@@ -56,7 +56,7 @@ apt-get update && apt-get install -y curl unzip iproute2
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install -y nodejs
 
 # 3. Проект
-git clone https://github.com/<user>/ghostvpn.git
+git clone https://github.com/1ehan2ole-lab/ghostvpn.git
 cd ghostvpn
 npm install
 npm run xray:install          # скачивает ядро Xray в ./vendor/xray
