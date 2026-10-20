@@ -57,6 +57,20 @@ function randomShortId() {
 }
 
 /**
+ * Generate an X25519 keypair for REALITY without the external binary.
+ * The format is byte-compatible with `xray x25519` (base64url of the raw keys).
+ */
+export function generateRealityKeyPair() {
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('x25519');
+  const privDer = privateKey.export({ type: 'pkcs8', format: 'der' });
+  const pubDer = publicKey.export({ type: 'spki', format: 'der' });
+  return {
+    privateKey: privDer.subarray(privDer.length - 32).toString('base64url'),
+    publicKey: pubDer.subarray(pubDer.length - 32).toString('base64url'),
+  };
+}
+
+/**
  * Returns { privateKey, publicKey, shortId, shortIds }.
  * Keys are generated once and stored in the settings table.
  */
@@ -69,12 +83,19 @@ export async function ensureRealityKeys() {
     .filter((s) => /^[0-9a-fA-F]{2,16}$/.test(s));
 
   if (!privateKey || !publicKey) {
-    const out = await xrayCli(['x25519']);
-    const priv = out.match(/PrivateKey:\s*(\S+)/i);
-    const pub = out.match(/(?:Password \(PublicKey\)|PublicKey):\s*(\S+)/i);
-    if (!priv || !pub) throw new Error(`Cannot parse xray x25519 output: ${out}`);
-    privateKey = priv[1];
-    publicKey = pub[1];
+    let generated = null;
+    try {
+      generated = generateRealityKeyPair();
+    } catch (err) {
+      // Запасной путь: генерация через ядро Xray.
+      const out = await xrayCli(['x25519']);
+      const priv = out.match(/PrivateKey:\s*(\S+)/i);
+      const pub = out.match(/(?:Password \(PublicKey\)|PublicKey):\s*(\S+)/i);
+      if (!priv || !pub) throw new Error(`Cannot generate REALITY keys: ${out}`);
+      generated = { privateKey: priv[1], publicKey: pub[1] };
+    }
+    privateKey = generated.privateKey;
+    publicKey = generated.publicKey;
     setSetting('reality_private_key', privateKey);
     setSetting('reality_public_key', publicKey);
   }

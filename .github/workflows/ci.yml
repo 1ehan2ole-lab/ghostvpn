@@ -21,6 +21,9 @@ jobs:
       - name: Установка зависимостей
         run: npm ci
 
+      - name: Установка ядра Xray
+        run: npm run xray:install
+
       - name: Проверка синтаксиса
         run: node --check server/index.js
 
