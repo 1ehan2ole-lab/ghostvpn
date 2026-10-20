@@ -244,11 +244,14 @@ public enum SingBoxConfigBuilder {
             "log": ["level": options.logLevel, "timestamp": true],
             "dns": [
                 "servers": [
-                    ["tag": "dns-remote", "type": "udp", "server": options.dnsServer],
+                    // DNS через туннель: провайдеры часто блокируют 1.1.1.1/8.8.8.8
+                    ["tag": "dns-proxy", "type": "udp", "server": options.dnsServer, "detour": "proxy"],
+                    // Прямой резолвер - нужен для адреса самой ноды
                     ["tag": "dns-local", "type": "udp", "server": "8.8.8.8"],
                 ],
-                "final": "dns-remote",
-                "strategy": "prefer_ipv4",
+                "final": "dns-proxy",
+                // только IPv4: AAAA-записи часто уводят трафик мимо туннеля
+                "strategy": "ipv4_only",
             ],
             "inbounds": inbounds,
             "outbounds": [outbound,

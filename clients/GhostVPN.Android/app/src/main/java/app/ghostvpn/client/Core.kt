@@ -262,15 +262,23 @@ object SingBoxConfig {
             })
             put("dns", JSONObject().apply {
                 put("servers", org.json.JSONArray().apply {
+                    // DNS через туннель: провайдеры часто блокируют 1.1.1.1/8.8.8.8
                     put(JSONObject().apply {
-                        put("tag", "dns-remote"); put("type", "udp"); put("server", "1.1.1.1")
+                        put("tag", "dns-proxy")
+                        put("type", "udp")
+                        put("server", "1.1.1.1")
+                        put("detour", "proxy")
                     })
+                    // Прямой резолвер - нужен для адреса самой ноды
                     put(JSONObject().apply {
-                        put("tag", "dns-local"); put("type", "udp"); put("server", "8.8.8.8")
+                        put("tag", "dns-local")
+                        put("type", "udp")
+                        put("server", "8.8.8.8")
                     })
                 })
-                put("final", "dns-remote")
-                put("strategy", "prefer_ipv4")
+                put("final", "dns-proxy")
+                // только IPv4: AAAA-записи часто уводят трафик мимо туннеля
+                put("strategy", "ipv4_only")
             })
             put("inbounds", org.json.JSONArray().apply { inbounds.forEach { put(it) } })
             put("outbounds", org.json.JSONArray().apply {

@@ -198,7 +198,11 @@ export function buildXrayConfig({ reality, users, settings = {} }) {
         { type: 'field', inboundTag: ['api'], outboundTag: 'api' },
         { type: 'field', ip: ['geoip:private'], outboundTag: 'direct' },
         { type: 'field', protocol: ['bittorrent'], outboundTag: 'block' },
-        { type: 'field', port: '443,8443', network: 'udp', outboundTag: 'block' },
+        // QUIC (UDP/443) блокируется по умолчанию: браузер уходит на TCP,
+        // который стабильнее проходит через маскировку REALITY.
+        ...(settings.allow_quic
+          ? []
+          : [{ type: 'field', port: '443,8443', network: 'udp', outboundTag: 'block' }]),
         { type: 'field', network: 'tcp,udp', outboundTag: 'direct' },
       ],
     },
@@ -228,6 +232,7 @@ export async function writeXrayConfig({ force = false } = {}) {
     reality_dest: runtime.realityDest,
     reality_fingerprint: runtime.realityFingerprint,
     loglevel: runtime.loglevel,
+    allow_quic: runtime.allowQuic,
   };
   const users = listUsers();
   const cfg = buildXrayConfig({ reality, users, settings });

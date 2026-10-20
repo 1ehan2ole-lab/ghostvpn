@@ -49,8 +49,10 @@
       '<button class="btn btn-sm btn-ghost" data-action="extend">+30 дн.</button>' +
       '<button class="btn btn-sm btn-ghost" data-action="reset">Трафик</button>' +
       '<button class="btn btn-sm btn-ghost" data-action="rotate">Ключ</button>' +
-      '<button class="btn btn-sm ' + (user.status === 'active' ? 'btn-ghost' : 'btn-ghost') + '" data-action="toggle">' +
-      (user.status === 'active' ? 'Отключить' : 'Включить') + '</button>' +
+      (user.status === 'pending'
+        ? '<button class="btn btn-sm" data-action="activate">Активировать</button>'
+        : '<button class="btn btn-sm btn-ghost" data-action="toggle">' +
+          (user.status === 'active' ? 'Отключить' : 'Включить') + '</button>') +
       '<button class="btn btn-sm btn-danger" data-action="delete">Удалить</button>' +
       '</div></td></tr>'
     );
@@ -97,6 +99,7 @@
     set('set_dest', s.realityDest);
     set('set_fp', s.realityFingerprint);
     set('set_log', s.loglevel);
+    set('set_quic', s.allowQuic ? '1' : '0');
     set('set_name', s.siteName);
     set('set_tagline', s.siteTagline);
     set('set_support', s.supportUrl);
@@ -265,6 +268,11 @@
         if (!confirm('Перевыпустить ключ у ' + user.email + '? Старая ссылка перестанет работать.')) return;
         await Ghost.api('/api/admin/users/' + id + '/rotate-key', { method: 'POST' });
         Ghost.toast('Ключ перевыпущен', 'ok');
+      } else if (action === 'activate') {
+        const days = Number(prompt('На сколько дней активировать ключ?', '30'));
+        if (!days) return;
+        await Ghost.api('/api/admin/users/' + id + '/activate', { method: 'POST', body: { days: Number(days) } });
+        Ghost.toast('Ключ активирован на ' + days + ' дн.', 'ok');
       } else if (action === 'toggle') {
         const next = user.status === 'active' ? 'disabled' : 'active';
         await Ghost.api('/api/admin/users/' + id, { method: 'PATCH', body: { status: next } });
@@ -333,6 +341,108 @@
   });
 
   /* -------------------------------------------------------------- */
+  /* Batch key generation                                            */
+  /* -------------------------------------------------------------- */
+
+  let generatedKeys = [];
+
+  async function loadBatches() {
+    const res = await Ghost.api('/api/admin/batches');
+    const body = document.getElementById('batchesBody');
+    body.innerHTML = res.batches.length
+      ? res.batches.map((b) =>
+          '<tr><td>' + Ghost.escape(b.label) + '</td>' +
+          '<td>' + b.count + '</td>' +
+          '<td>' + b.active + '</td>' +
+          '<td>' + b.pending + '</td>' +
+          '<td><button class="btn btn-sm btn-ghost" data-batch="' + Ghost.escape(b.label) + '">Экспорт</button></td></tr>'
+        ).join('')
+      : '<tr><td colspan="5" class="muted center">Партий пока нет</td></tr>';
+  }
+
+  document.getElementById('generateBtn').addEventListener('click', async function () {
+    const alertBox = document.getElementById('genAlert');
+    alertBox.classList.remove('show');
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Создаём...';
+    try {
+      const res = await Ghost.api('/api/admin/batch-keys', {
+        method: 'POST',
+        body: {
+          count: Number(document.getElementById('gen_count').value || 1),
+          days: Number(document.getElementById('gen_days').value || 30),
+          trafficGb: Number(document.getElementById('gen_traffic').value || 0),
+          plan: document.getElementById('gen_plan').value,
+          price: Number(document.getElementById('gen_price').value || 0),
+          label: document.getElementById('gen_label').value,
+          usernamePrefix: document.getElementById('gen_prefix').value,
+          emailDomain: document.getElementById('gen_domain').value,
+          activate: document.getElementById('gen_activate').value === '1',
+        },
+      });
+      generatedKeys = res.created;
+      document.getElementById('genSummary').textContent =
+        'Создано ключей: ' + res.created.length + (res.failed.length ? ', ошибок: ' + res.failed.length : '') +
+        ' · срок ' + res.days + ' дн. · тариф «' + res.plan + '»';
+      document.getElementById('genKeysBox').textContent =
+        res.created.map((k) => k.email + '  ' + k.password + '\n' + k.key).join('\n\n') || '—';
+      Ghost.toast('Создано ключей: ' + res.created.length, 'ok');
+      await loadBatches();
+      await loadUsers();
+    } catch (err) {
+      alertBox.textContent = err.message || 'Ошибка генерации';
+      alertBox.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Сгенерировать';
+    }
+  });
+
+  document.getElementById('copyGenBtn').addEventListener('click', function () {
+    if (!generatedKeys.length) { Ghost.toast('Сначала сгенерируйте ключи', 'err'); return; }
+    Ghost.copy(generatedKeys.map((k) => k.key).join('\n'), 'Ключи скопированы');
+  });
+
+  function downloadCsv(rows, filename) {
+    const escape = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+    const header = ['email', 'password', 'status', 'expires_at', 'traffic_limit_gb', 'key', 'subscription', 'label'];
+    const body = rows.map((k) => [
+      k.email, k.password, k.status,
+      k.expiresAt ? new Date(k.expiresAt).toISOString().slice(0, 10) : '',
+      k.trafficLimitGb, k.key, k.subscription, k.label || '',
+    ].map(escape).join(','));
+    const blob = new Blob(['\ufeff' + [header.map(escape).join(','), ...body].join('\n')],
+      { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportKeys(format, label) {
+    // Свежие ключи выгружаем из памяти - там есть и пароли.
+    if (generatedKeys.length && format === 'csv') {
+      downloadCsv(generatedKeys, 'ghostvpn-keys.csv');
+      return;
+    }
+    const target = label || document.getElementById('gen_label').value;
+    const url = Ghost.url('/api/admin/export?format=' + format + '&label=' + encodeURIComponent(target));
+    window.open(url, '_blank');
+  }
+
+  document.getElementById('exportCsvBtn').addEventListener('click', () => exportKeys('csv'));
+  document.getElementById('exportTxtBtn').addEventListener('click', () => exportKeys('txt'));
+
+  document.getElementById('batchesBody').addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-batch]');
+    if (!btn) return;
+    exportKeys('csv', btn.getAttribute('data-batch'));
+  });
+
+  /* -------------------------------------------------------------- */
   /* tabs & actions                                                  */
   /* -------------------------------------------------------------- */
 
@@ -341,9 +451,10 @@
       document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
       tab.classList.add('active');
       const name = tab.getAttribute('data-tab');
-      ['users', 'payments', 'settings', 'invites', 'events', 'server'].forEach(function (key) {
+      ['users', 'keys', 'payments', 'settings', 'invites', 'events', 'server'].forEach(function (key) {
         document.getElementById('tab-' + key).classList.toggle('hidden', key !== name);
       });
+      if (name === 'keys') await loadBatches();
       if (name === 'payments') await loadPayments();
       if (name === 'settings') await loadSettings();
       if (name === 'invites') await loadInvites();
@@ -362,6 +473,7 @@
       reality_dest: document.getElementById('set_dest').value,
       reality_fingerprint: document.getElementById('set_fp').value,
       loglevel: document.getElementById('set_log').value,
+      allow_quic: document.getElementById('set_quic').value,
       site_name: document.getElementById('set_name').value,
       site_tagline: document.getElementById('set_tagline').value,
       support_url: document.getElementById('set_support').value,
@@ -385,8 +497,32 @@
     }
   });
 
-  document.getElementById('createInviteBtn').addEventListener('click', async function () {
-    const code = document.getElementById('inviteCode').value.trim();
+  document.getElementById('nodeCheckBtn').addEventListener('click', async function () {
+    const box = document.getElementById('nodeCheckResult');
+    const btn = this;
+    btn.disabled = true;
+    box.innerHTML = '<div class="small muted">Проверяем...</div>';
+    try {
+      const res = await Ghost.api('/api/admin/node-check');
+      box.innerHTML =
+        '<div class="alert ' + (res.youtubeOk ? 'alert-ok' : 'alert-error') + ' show">' +
+        Ghost.escape(res.hint) + '</div>' +
+        '<div class="table-wrap"><table><thead><tr><th>Сервис</th><th>Статус</th><th>Время</th></tr></thead><tbody>' +
+        res.results.map((r) =>
+          '<tr><td>' + Ghost.escape(r.name) + (r.detail ? ' <span class="small muted">' + Ghost.escape(r.detail) + '</span>' : '') + '</td>' +
+          '<td>' + (r.ok
+            ? '<span class="badge badge-ok">OK ' + r.status + '</span>'
+            : '<span class="badge badge-err">' + Ghost.escape(r.error || 'ошибка') + '</span>') + '</td>' +
+          '<td class="small muted">' + r.ms + ' мс</td></tr>'
+        ).join('') + '</tbody></table></div>';
+    } catch (err) {
+      box.innerHTML = '<div class="alert alert-error show">' + Ghost.escape(err.message) + '</div>';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('createInviteBtn').addEventListener('click', async function () {    const code = document.getElementById('inviteCode').value.trim();
     const maxUses = Number(document.getElementById('inviteUses').value || 1);
     try {
       const res = await Ghost.api('/api/admin/invites', { method: 'POST', body: { code, maxUses } });

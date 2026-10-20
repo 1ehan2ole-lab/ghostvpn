@@ -36,6 +36,9 @@ export function rt() {
     deviceLimit: num(s.device_limit, config.deviceLimit),
     defaultTrafficGb: num(s.default_traffic_gb, config.defaultTrafficGb),
     trialDays: num(s.trial_days, config.trialDays),
+    // Разрешить QUIC (UDP/443) через туннель. По умолчанию выключено:
+    // QUIC блокируется, браузер переключается на TCP (стабильнее через REALITY).
+    allowQuic: bool(s.allow_quic, false),
     plans: {
       '1m': { id: '1m', label: '1 месяц', days: num(s.plan_1m_days, 30) },
       '3m': { id: '3m', label: '3 месяца', days: num(s.plan_3m_days, 90) },

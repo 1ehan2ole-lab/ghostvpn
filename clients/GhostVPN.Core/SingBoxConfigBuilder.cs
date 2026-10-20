@@ -115,12 +115,15 @@ public static class SingBoxConfigBuilder
             {
                 ["servers"] = new JsonArray
                 {
+                    // DNS через туннель: провайдеры часто блокируют 1.1.1.1/8.8.8.8
                     new JsonObject
                     {
-                        ["tag"] = "dns-remote",
+                        ["tag"] = "dns-proxy",
                         ["type"] = "udp",
                         ["server"] = opt.DnsServer,
+                        ["detour"] = "proxy",
                     },
+                    // Прямой резолвер - нужен для адреса самой ноды
                     new JsonObject
                     {
                         ["tag"] = "dns-local",
@@ -128,8 +131,9 @@ public static class SingBoxConfigBuilder
                         ["server"] = "8.8.8.8",
                     },
                 },
-                ["final"] = "dns-remote",
-                ["strategy"] = "prefer_ipv4",
+                ["final"] = "dns-proxy",
+                // только IPv4: AAAA-записи часто уводят трафик мимо туннеля
+                ["strategy"] = "ipv4_only",
             },
             ["inbounds"] = inbounds,
             ["outbounds"] = outbounds,
