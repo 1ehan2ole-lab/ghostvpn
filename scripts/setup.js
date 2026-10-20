@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config, ensureDirs } from '../server/config.js';
-import { initDb, findUserByEmail, getSetting } from '../server/db.js';
+import { initDb, findUserByEmail, getSetting, listUsers } from '../server/db.js';
 import { bootstrapAdmin, createUser, effectiveStatus } from '../server/service.js';
 import { ensureRealityKeys, writeXrayConfig } from '../server/xray.js';
 import { buildUserLinks } from '../server/subscription.js';
@@ -31,10 +31,11 @@ function ensureEnv() {
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  const out = { user: null, show: null };
+  const out = { user: null, show: null, list: false };
   for (let i = 0; i < args.length; i += 1) {
     if (args[i] === '--user' && args[i + 1]) out.user = args[++i];
     if (args[i] === '--show' && args[i + 1]) out.show = args[++i];
+    if (args[i] === '--list') out.list = true;
   }
   return out;
 }
@@ -81,6 +82,20 @@ async function main() {
       process.exit(1);
     }
     await printKey(user);
+  }
+
+  if (args.list) {
+    const reality = await ensureRealityKeys();
+    console.log('\n  ─────────────────────────────────────────────');
+    console.log('  Все аккаунты');
+    for (const user of listUsers()) {
+      const links = buildUserLinks(user, reality, {});
+      console.log(`\n  ${user.email}  [${user.role}/${user.status}]`);
+      console.log('    UUID:      ' + user.vless_uuid);
+      console.log('    Подписка:  ' + (config.publicUrl || 'http://localhost:' + config.port) + '/sub/' + user.sub_token);
+      console.log('    Ключ:      ' + links.primary);
+    }
+    console.log('\n  ─────────────────────────────────────────────\n');
   }
 
   console.log('\n  Готово. Запуск: npm start\n');
