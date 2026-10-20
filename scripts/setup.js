@@ -31,11 +31,12 @@ function ensureEnv() {
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  const out = { user: null, show: null, list: false };
+  const out = { user: null, show: null, list: false, restore: null };
   for (let i = 0; i < args.length; i += 1) {
     if (args[i] === '--user' && args[i + 1]) out.user = args[++i];
     if (args[i] === '--show' && args[i + 1]) out.show = args[++i];
     if (args[i] === '--list') out.list = true;
+    if (args[i] === '--restore' && args[i + 1]) out.restore = args[++i];
   }
   return out;
 }
@@ -61,6 +62,27 @@ async function main() {
     if (admin.password) console.log('    пароль: ' + admin.password);
   } else {
     console.log('  ✓ администратор уже существует');
+  }
+
+  if (args.restore) {
+    // --restore email:password:username:uuid:subToken
+    const [email, password, username, uuid, token] = args.restore.split(':');
+    let user = findUserByEmail(email);
+    if (user) {
+      console.log('  ! аккаунт ' + email + ' уже существует, обновляем пароль');
+      updateUser(user.id, { password_hash: hashPassword(password) });
+      user = findUserByEmail(email);
+    } else {
+      user = createUser({
+        email,
+        password,
+        username: username || email.split('@')[0],
+        uuid,
+        token,
+      });
+      console.log('  ✓ восстановлен аккаунт: ' + user.email);
+    }
+    await printKey(user);
   }
 
   if (args.user) {

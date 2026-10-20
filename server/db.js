@@ -90,8 +90,51 @@ export function initDb() {
   db = new DatabaseSync(config.dbPath);
   db.exec('PRAGMA journal_mode = WAL;');
   db.exec('PRAGMA foreign_keys = ON;');
+  // Частый чекпойнт: основной файл БД всегда содержит свежие данные,
+  // даже если процесс был убит (SIGKILL) и WAL-файл осиротел.
+  db.exec('PRAGMA wal_autocheckpoint = 64;');
+  db.exec('PRAGMA synchronous = FULL;');
   db.exec(SCHEMA);
   return db;
+}
+
+/** Принудительно слить WAL в основной файл БД. */
+export function checkpoint() {
+  if (!db) return;
+  try {
+    db.exec('PRAGMA wal_checkpoint(TRUNCATE);');
+  } catch {
+    /* база занята другим соединением - не критично */
+  }
+}
+
+/** Резервная копия БД (раз в сутки). */
+export function backupDatabase() {
+  try {
+    if (!db) return null;
+    const dir = path.join(config.dataDir, 'backups');
+    fs.mkdirSync(dir, { recursive: true });
+    const stamp = new Date().toISOString().slice(0, 10);
+    const target = path.join(dir, `ghostvpn-${stamp}.db`);
+    if (fs.existsSync(target)) return target;
+    checkpoint();
+    fs.copyFileSync(config.dbPath, target);
+    return target;
+  } catch (err) {
+    console.error('[db] не удалось сделать резервную копию:', err.message);
+    return null;
+  }
+}
+
+/** Проверка целостности БД. */
+export function checkIntegrity() {
+  if (!db) return { ok: false, message: 'база не открыта' };
+  try {
+    const row = db.prepare('PRAGMA integrity_check').get();
+    return { ok: row.integrity_check === 'ok', message: row.integrity_check };
+  } catch (err) {
+    return { ok: false, message: err.message };
+  }
 }
 
 export function getDb() {

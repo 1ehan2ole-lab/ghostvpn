@@ -51,6 +51,8 @@ export function createUser({
   deviceLimit = config.deviceLimit,
   note = '',
   ip = '',
+  uuid = '',
+  token = '',
 }) {
   const mail = String(email || '').trim().toLowerCase();
   const name = String(username || '').trim().toLowerCase();
@@ -72,9 +74,9 @@ export function createUser({
     password_hash: hashPassword(password),
     role,
     status,
-    vless_uuid: randomUuid(),
+    vless_uuid: uuid || randomUuid(),
     vless_tag: randomTag('gv'),
-    sub_token: buildSubToken(),
+    sub_token: token || buildSubToken(),
     traffic_limit: Math.round(Number(trafficLimitGb || 0) * GB),
     expires_at: expires,
     device_limit: deviceLimit,

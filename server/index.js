@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { config, ensureDirs } from './config.js';
-import { initDb, deleteExpiredSessions } from './db.js';
+import { initDb, deleteExpiredSessions, checkpoint, backupDatabase, checkIntegrity } from './db.js';
 import { attachUser, csrfGuard } from './auth.js';
 import { bootstrapAdmin, syncTraffic } from './service.js';
 import { ensureRealityKeys, isRunning, startXray, stopXray, xrayBinaryExists } from './xray.js';
@@ -158,6 +158,13 @@ export async function start() {
     console.log(`  │ Пароль:  ${String(admin.password).padEnd(34)}│`);
     console.log('  └─────────────────────────────────────────────┘\n');
   }
+
+  // Целостность БД и ежедневная резервная копия.
+  const integrity = checkIntegrity();
+  if (!integrity.ok) console.error('[db] ПРОБЛЕМА ЦЕЛОСТНОСТИ БД:', integrity.message);
+  else console.log('  ✓ целостность БД: ok');
+  const backup = backupDatabase();
+  if (backup) console.log('  ✓ резервная копия: ' + backup);
   try {
     await ensureRealityKeys();
   } catch (err) {
@@ -179,6 +186,10 @@ export async function start() {
   }, 30_000);
   syncTimer.unref?.();
 
+  // Регулярный чекпойнт WAL: основной файл БД не должен отставать.
+  const checkpointTimer = setInterval(() => checkpoint(), 60_000);
+  checkpointTimer.unref?.();
+
   // Watchdog: bring the xray core back if it dies.
   const watchdog = setInterval(() => {
     if (!isRunning() && xrayBinaryExists()) {
@@ -189,13 +200,18 @@ export async function start() {
   }, 20_000);
   watchdog.unref?.();
 
-  return { app, server, syncTimer, watchdog };
+  return { app, server, syncTimer, checkpointTimer, watchdog };
 }
 
 async function shutdown(signal) {
   console.log(`\n  ${signal} - останавливаюсь...`);
   try {
     if (isRunning()) await stopXray();
+  } catch {
+    /* ignore */
+  }
+  try {
+    checkpoint();
   } catch {
     /* ignore */
   }
