@@ -33,6 +33,11 @@ jobs:
           window.GHOSTVPN_API_BASE = '${PANEL_URL}';
           window.GHOSTVPN_PANEL_URL = '${PANEL_URL}';
           EOF
+          # Версия config.js в URL, чтобы браузер не держал старый кэш.
+          BUILD_ID=$(date +%s)
+          for html in _site/*.html; do
+            sed -i "s|src=\"config.js\"|src=\"config.js?v=${BUILD_ID}\"|" "$html"
+          done
           # Серверные страницы (кабинет, вход, регистрация) заменяем
           # на заглушку со ссылкой на панель.
           for page in login register dashboard admin; do
