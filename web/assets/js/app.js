@@ -172,10 +172,16 @@
     // Если сайт опубликован отдельно от панели - перенаправляем внутренние ссылки.
     const panelUrl = String(window.GHOSTVPN_PANEL_URL || '').replace(/\/+$/, '');
     if (panelUrl && panelUrl !== location.origin) {
-      document.querySelectorAll('a[href^="/"]').forEach(function (a) {
-        const href = a.getAttribute('href');
-        if (href && href.charAt(1) !== '/') a.setAttribute('href', panelUrl + href);
-      });
+      const rewrite = function () {
+        document.querySelectorAll('a[href^="/"]').forEach(function (a) {
+          const href = a.getAttribute('href');
+          if (href && href.charAt(1) !== '/') a.setAttribute('href', panelUrl + href);
+        });
+      };
+      rewrite();
+      // Ссылки могут появиться позже (кнопки входа) - переписываем ещё раз.
+      setTimeout(rewrite, 400);
+      setTimeout(rewrite, 1200);
     }
 
     const toggle = document.querySelector('.nav-toggle');

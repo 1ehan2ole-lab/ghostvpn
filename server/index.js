@@ -48,6 +48,21 @@ export function createApp() {
   /* API                                                             */
   /* -------------------------------------------------------------- */
 
+  // CORS для статического сайта, опубликованного отдельно от панели.
+  // Credentials не разрешаются - cookie никогда не уходят на другой домен.
+  app.use('/api', (req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && config.corsOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Vary', 'Origin');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,PUT,DELETE,OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Access-Control-Max-Age', '600');
+    }
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+    next();
+  });
+
   app.use('/api/auth', authRoutes);
   app.use('/api/me', meRoutes);
   app.use('/api/admin', adminRoutes);

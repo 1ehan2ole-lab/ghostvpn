@@ -63,6 +63,12 @@ export const config = Object.freeze({
   host: str(env.HOST, '0.0.0.0'),
   publicUrl: str(env.PUBLIC_URL, '').replace(/\/+$/, ''),
   trustProxy: bool(env.TRUST_PROXY, false),
+  // Разрешённые источники для CORS (пусто = только свой домен).
+  // Нужно, если сайт опубликован отдельно от панели (например, GitHub Pages).
+  corsOrigins: str(env.CORS_ORIGINS, '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
 
   dataDir: DATA_DIR,
   dbPath: path.join(DATA_DIR, 'ghostvpn.db'),
