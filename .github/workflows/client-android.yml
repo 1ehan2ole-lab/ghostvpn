@@ -18,7 +18,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
+      - name: Компоненты Android SDK
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.0.12077973" "cmake;3.22.1" || true
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
 
       - name: Ядро sing-box для Android
         run: |
@@ -32,12 +36,13 @@ jobs:
 
       - name: tun2socks (hev-socks5-tunnel)
         run: |
-          sudo apt-get update && sudo apt-get install -y cmake ninja-build
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build
           git clone --depth 1 https://github.com/heiher/hev-socks5-tunnel.git
           cd hev-socks5-tunnel
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
-            -DANDROID_NDK=$ANDROID_NDK_HOME -DANDROID_ABI=arm64-v8a \
-            -DANDROID_PLATFORM=android-26 -DHEV_SOCKS5_TUNNEL_ENABLE_STATIC=OFF
+            -DANDROID_NDK=$ANDROID_HOME/ndk/27.0.12077973 -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-26
           cmake --build build --target hev-socks5-tunnel
           cp build/hev-socks5-tunnel \
             ../clients/GhostVPN.Android/app/src/main/jniLibs/arm64-v8a/libhev-socks5-tunnel.so
@@ -45,7 +50,6 @@ jobs:
       - name: Сборка APK
         run: |
           cd clients/GhostVPN.Android
-          chmod +x gradlew || true
           ./gradlew assembleRelease --no-daemon
 
       - uses: actions/upload-artifact@v4

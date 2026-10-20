@@ -295,7 +295,11 @@ public final class SingBoxRunner {
 
     /// Скачивание ядра для текущей платформы.
     public static func downloadCore(progress: ((String) -> Void)? = nil) async throws {
-        let arch = ProcessInfo.processInfo.architecture == .arm64 ? "arm64" : "amd64"
+        #if arch(arm64)
+        let arch = "arm64"
+        #else
+        let arch = "amd64"
+        #endif
         let archive = "sing-box-\(version)-darwin-\(arch).tar.gz"
         let url = URL(string: "https://github.com/SagerNet/sing-box/releases/download/v\(version)/\(archive)")!
 
