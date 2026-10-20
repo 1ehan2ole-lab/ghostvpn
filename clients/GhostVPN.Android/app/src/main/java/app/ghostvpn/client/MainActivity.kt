@@ -156,7 +156,8 @@ fun GhostVpnApp(onConnect: (String) -> Unit, onDisconnect: () -> Unit) {
                                     if (text.isEmpty()) { append("Укажите ссылку"); return@launch }
                                     val parsed = withContext(Dispatchers.IO) {
                                         if (text.startsWith("http")) {
-                                            val request = java.net.URL(text).openRequest() as java.net.HttpURLConnection
+                                            val url = java.net.URL(text)
+                                            val request = url.openConnection() as java.net.HttpURLConnection
                                             request.setRequestProperty("User-Agent", "GhostVPN/1.0 (Android)")
                                             request.connect()
                                             val body = request.inputStream.bufferedReader().use { it.readText() }
