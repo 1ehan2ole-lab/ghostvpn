@@ -1,0 +1,62 @@
+name: Client macOS
+
+on:
+  push:
+    branches: [main, master]
+    paths: ['clients/GhostVPN.Apple/**', '.github/workflows/client-macos.yml']
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Сборка клиента macOS
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ядро sing-box
+        run: |
+          version=1.14.3
+          url="https://github.com/SagerNet/sing-box/releases/download/v${version}/sing-box-${version}-darwin-arm64.tar.gz"
+          curl -fsSL "$url" -o sing-box.tar.gz
+          mkdir -p clients/dist/macos/GhostVPN.app/Contents/MacOS
+          tar -xzf sing-box.tar.gz -C /tmp
+          mkdir -p clients/dist/macos/GhostVPN.app/Contents/Resources/core
+          cp /tmp/*/sing-box clients/dist/macos/GhostVPN.app/Contents/Resources/core/sing-box
+
+      - name: Сборка приложения
+        run: |
+          cd clients/GhostVPN.Apple
+          swift build -c release --arch arm64
+          mkdir -p ../dist/macos/GhostVPN.app/Contents/MacOS
+          cp .build/release/GhostVPN ../dist/macos/GhostVPN.app/Contents/MacOS/GhostVPN
+
+      - name: Инфо-плейлист
+        run: |
+          cat > clients/dist/macos/GhostVPN.app/Contents/Info.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>GhostVPN</string>
+            <key>CFBundleDisplayName</key><string>GhostVPN</string>
+            <key>CFBundleIdentifier</key><string>app.ghostvpn.client</string>
+            <key>CFBundleExecutable</key><string>GhostVPN</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleShortVersionString</key><string>1.0.0</string>
+            <key>CFBundleVersion</key><string>1</string>
+            <key>LSMinimumSystemVersion</key><string>13.0</string>
+            <key>NSHighResolutionCapable</key><true/>
+          </dict>
+          </plist>
+          PLIST
+
+      - name: DMG
+        run: |
+          hdiutil create -volname GhostVPN -srcfolder clients/dist/macos/GhostVPN.app -ov -format UDZO GhostVPN-macOS-arm64.dmg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ghostvpn-macos
+          path: |
+            clients/dist/macos/**
+            GhostVPN-macOS-arm64.dmg

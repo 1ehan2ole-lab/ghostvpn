@@ -29,6 +29,7 @@ GhostVPN — self-hosted VPN-сервис на базе ядра [Xray-core](htt
 | 🛠 Админка | Пользователи, лимиты, продление, инвайты, настройки, журнал, управление Xray |
 | 💳 Оплата | Заявки на продление из кабинета → подтверждение в админке (продление + сброс трафика) |
 | 🔒 Безопасность | scrypt-пароли, httpOnly-сессии, CSRF-защита, rate-limit, ACL |
+| 📱 Свои клиенты | Windows (.exe), macOS (.dmg), Android (.apk), iOS (.ipa) + консольный клиент |
 | 🐳 Деплой | Docker/docker-compose, systemd-совместимый запуск, GitHub Actions |
 
 ---
@@ -228,6 +229,31 @@ powershell -File scripts\test-dest.ps1      # подбор рабочего REAL
 
 Workflow `.github/workflows/deploy-pages.yml` собирает папку `web/` и подставляет адрес панели
 в `config.js`. Кабинет и админка при этом остаются на сервере панели.
+
+---
+
+## Свои клиенты
+
+В репозитории лежат клиенты под все платформы — общий протокол подписки, ядро sing-box:
+
+| Платформа | Стек | Артефакт |
+|---|---|---|
+| Windows | C# / WPF / .NET 10 | `GhostVPN.exe` (собран и проверен) |
+| macOS | Swift / SwiftUI | `.app` / `.dmg` |
+| Android | Kotlin / Jetpack Compose | `.apk` (VpnService + sing-box + tun2socks) |
+| iOS | Swift / SwiftUI | `.ipa` (сетевое расширение) |
+| Linux / сервер | C# / .NET 10 | консольный `ghostvpn` |
+
+Сборка: `clients/README.md`, workflow-файлы `.github/workflows/client-*.yml`.
+
+```bash
+# Windows
+dotnet publish clients/GhostVPN.Windows/GhostVPN.Windows.csproj -c Release -r win-x64 \
+  --self-contained false -p:PublishSingleFile=true -o clients/dist/windows
+
+# консольный клиент
+dotnet run --project clients/GhostVPN.Cli -- --list "https://vpn.example.com/sub/TOKEN"
+```
 
 ---
 

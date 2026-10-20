@@ -1,0 +1,38 @@
+name: Client iOS
+
+on:
+  push:
+    branches: [main, master]
+    paths: ['clients/GhostVPN.Apple/**', '.github/workflows/client-ios.yml']
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Проверка сборки под iOS
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Проверка компиляции пакета под iOS
+        run: |
+          cd clients/GhostVPN.Apple
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          swift build \
+            -Xswiftc -sdk -Xswiftc "$SDK" \
+            -Xswiftc -target -Xswiftc arm64-apple-ios16.0 \
+            --triple arm64-apple-ios16.0
+
+      - name: Сборка приложения под iOS
+        run: |
+          cd clients/GhostVPN.Apple
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          swift build -c release \
+            -Xswiftc -sdk -Xswiftc "$SDK" \
+            -Xswiftc -target -Xswiftc arm64-apple-ios16.0 \
+            --triple arm64-apple-ios16.0
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ghostvpn-ios
+          path: clients/GhostVPN.Apple/.build/arm64-apple-ios/release
+          if-no-files-found: ignore

@@ -1,0 +1,47 @@
+name: Client Windows
+
+on:
+  push:
+    branches: [main, master]
+    paths: ['clients/**', '.github/workflows/client-windows.yml']
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Сборка клиента Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Сборка
+        run: |
+          dotnet publish clients/GhostVPN.Windows/GhostVPN.Windows.csproj `
+            -c Release -r win-x64 --self-contained false `
+            -p:PublishSingleFile=true -o clients/dist/windows
+
+      - name: Ядро sing-box
+        run: |
+          $version = '1.14.3'
+          $url = "https://github.com/SagerNet/sing-box/releases/download/v$version/sing-box-$version-windows-amd64.zip"
+          Invoke-WebRequest $url -OutFile sing-box.zip
+          Expand-Archive sing-box.zip -DestinationPath sb -Force
+          New-Item -ItemType Directory -Force -Path clients/dist/windows/core | Out-Null
+          Copy-Item sb/*/sing-box.exe clients/dist/windows/core/sing-box.exe
+
+      - name: Сборка CLI
+        run: dotnet publish clients/GhostVPN.Cli/GhostVPN.Cli.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o clients/dist/cli
+
+      - name: Архив
+        run: Compress-Archive -Path clients/dist/windows/* -DestinationPath GhostVPN-Windows-x64.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ghostvpn-windows
+          path: |
+            clients/dist/windows/**
+            clients/dist/cli/**
+            GhostVPN-Windows-x64.zip

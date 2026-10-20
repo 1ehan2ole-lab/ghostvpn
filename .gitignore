@@ -29,3 +29,18 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Клиенты (сборка)
+clients/dist/
+clients/**/bin/
+clients/**/obj/
+clients/**/.build/
+clients/**/build/
+clients/**/.gradle/
+clients/**/local.properties
+clients/**/*.apk
+clients/**/*.aab
+clients/**/*.ipa
+clients/**/*.dmg
+*.png
+!web/**/*.png

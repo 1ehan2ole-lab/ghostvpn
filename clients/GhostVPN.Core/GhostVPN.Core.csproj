@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>GhostVPN.Core</RootNamespace>
+    <AssemblyName>GhostVPN.Core</AssemblyName>
+    <Version>1.0.0</Version>
+    <Company>GhostVPN</Company>
+    <Product>GhostVPN Client</Product>
+  </PropertyGroup>
+
+</Project>

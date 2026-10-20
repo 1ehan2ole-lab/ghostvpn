@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>GhostVPN.Windows</RootNamespace>
+    <AssemblyName>GhostVPN</AssemblyName>
+    <ApplicationIcon>Assets\ghost.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <Company>GhostVPN</Company>
+    <Product>GhostVPN Client</Product>
+    <Description>Клиент GhostVPN для Windows</Description>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <PublishSingleFile>false</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GhostVPN.Core\GhostVPN.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Assets\ghost.ico" CopyToOutputDirectory="PreserveNewest" Condition="Exists('Assets\ghost.ico')" />
+  </ItemGroup>
+
+</Project>
