@@ -8,9 +8,19 @@
  *  - sing-box JSON
  */
 import { config } from './config.js';
+import { rt } from './runtime.js';
 import { sha256 } from './util.js';
 
 export function getPublicHost(req, { port } = {}) {
+  const configured = rt().publicUrl;
+  if (configured) {
+    try {
+      // hostname без порта: порт VPN задаётся отдельно (SERVER_PORT)
+      return new URL(configured).hostname;
+    } catch {
+      /* ignore */
+    }
+  }
   if (config.serverHost) return config.serverHost;
   if (config.publicUrl) {
     try {

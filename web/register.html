@@ -74,6 +74,11 @@
     }
   }).catch(function () {});
 
+  // Уже вошли - сразу в кабинет.
+  Ghost.loadSession().then(function (user) {
+    if (user) location.replace(user.role === 'admin' ? '/admin' : '/dashboard');
+  });
+
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
     alertBox.classList.remove('show');
@@ -92,7 +97,7 @@
       });
       okBox.textContent = 'Готово! Перенаправляем в кабинет...';
       okBox.classList.add('show');
-      setTimeout(function () { location.href = '/dashboard'; }, 600);
+      setTimeout(function () { location.replace('/dashboard'); }, 600);
     } catch (err) {
       alertBox.textContent = err.message || 'Не удалось зарегистрироваться';
       alertBox.classList.add('show');

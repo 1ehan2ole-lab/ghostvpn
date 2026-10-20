@@ -237,7 +237,7 @@ router.get('/events', (req, res) => {
 /* ------------------------------------------------------------------ */
 
 const SETTING_KEYS = new Set([
-  'server_port', 'reality_sni', 'reality_dest', 'reality_fingerprint', 'loglevel',
+  'server_port', 'public_url', 'reality_sni', 'reality_dest', 'reality_fingerprint', 'loglevel',
   'allow_quic',
   'site_name', 'site_tagline', 'support_url', 'currency',
   'price_1m', 'price_3m', 'price_6m', 'price_12m',
@@ -498,7 +498,7 @@ router.post('/batch-keys', async (req, res) => {
           uuid: user.vless_uuid,
           status: user.status,
           key: links.primary,
-          subscription: `${config.publicUrl || `http://localhost:${config.port}`}/sub/${user.sub_token}`,
+          subscription: `${rt().publicUrl || `http://localhost:${config.port}`}/sub/${user.sub_token}`,
           expiresAt: user.expires_at,
           days,
           trafficLimitGb: trafficGb,
@@ -565,7 +565,7 @@ router.get('/export', async (req, res) => {
       '',
       u.status,
       links.primary,
-      `${config.publicUrl || `http://localhost:${config.port}`}/sub/${u.sub_token}`,
+      `${rt().publicUrl || `http://localhost:${config.port}`}/sub/${u.sub_token}`,
       u.expires_at ? new Date(u.expires_at).toISOString().slice(0, 10) : '',
       toGb(u.traffic_limit),
       toGb(u.traffic_used),

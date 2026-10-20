@@ -16,6 +16,8 @@ export function rt() {
   if (cache.value && Date.now() - cache.at < 3000) return cache.value;
   const s = getSettings();
   const value = {
+    // Публичный адрес панели: используется в подписках, ключах и на сайте
+    publicUrl: String(s.public_url || config.publicUrl || '').replace(/\/+$/, ''),
     serverPort: num(s.server_port, config.serverPort),
     realitySni: s.reality_sni || config.reality.sni,
     realityDest: s.reality_dest || config.reality.dest,

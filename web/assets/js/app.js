@@ -149,11 +149,12 @@
     const user = await Ghost.loadSession();
     if (!user) {
       const next = encodeURIComponent(location.pathname + location.search);
-      location.href = '/login?next=' + next;
+      // replace, а не href: иначе кнопка "назад" снова уводит на страницу входа
+      location.replace('/login?next=' + next);
       return null;
     }
     if (options && options.admin && user.role !== 'admin') {
-      location.href = '/dashboard';
+      location.replace('/dashboard');
       return null;
     }
     return user;

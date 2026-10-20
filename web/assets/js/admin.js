@@ -95,6 +95,7 @@
       if (el) el.value = value === undefined || value === null ? '' : value;
     };
     set('set_port', s.serverPort);
+    set('set_public', s.publicUrl);
     set('set_sni', s.realitySni);
     set('set_dest', s.realityDest);
     set('set_fp', s.realityFingerprint);
@@ -469,6 +470,7 @@
   document.getElementById('saveSettings').addEventListener('click', async function () {
     const body = {
       server_port: Number(document.getElementById('set_port').value || 443),
+      public_url: document.getElementById('set_public').value.trim(),
       reality_sni: document.getElementById('set_sni').value,
       reality_dest: document.getElementById('set_dest').value,
       reality_fingerprint: document.getElementById('set_fp').value,

@@ -51,6 +51,22 @@
   const alertBox = document.getElementById('alert');
   const btn = document.getElementById('submitBtn');
 
+  // Если сессия уже есть - сразу в кабинет, без лишнего логина.
+  Ghost.loadSession().then(function (user) {
+    if (!user) return;
+    const next = safeNext();
+    location.replace(next || (user.role === 'admin' ? '/admin' : '/dashboard'));
+  });
+
+  // Принимаем только внутренние пути (защита от open redirect).
+  function safeNext() {
+    const value = new URLSearchParams(location.search).get('next');
+    if (!value) return null;
+    const path = decodeURIComponent(value);
+    if (!path.startsWith('/') || path.startsWith('//')) return null;
+    return path;
+  }
+
   function fail(message) {
     alertBox.textContent = message;
     alertBox.classList.add('show');
@@ -66,8 +82,8 @@
         method: 'POST',
         body: { login: login.value, password: password.value },
       });
-      const next = new URLSearchParams(location.search).get('next');
-      location.href = next ? decodeURIComponent(next) : (res.user && res.user.role === 'admin' ? '/admin' : '/dashboard');
+      const next = safeNext();
+      location.replace(next || (res.user && res.user.role === 'admin' ? '/admin' : '/dashboard'));
     } catch (err) {
       fail(err.message || 'Не удалось войти');
       btn.disabled = false;
