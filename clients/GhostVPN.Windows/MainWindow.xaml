@@ -159,6 +159,8 @@
                         <CheckBox x:Name="TunCheck" Style="{StaticResource CheckStyle}" Content="TUN-режим (весь трафик, нужны права администратора)" />
                         <CheckBox x:Name="AutoConnectCheck" Style="{StaticResource CheckStyle}" Content="Подключаться при запуске" />
                         <TextBlock x:Name="CoreHint" FontSize="11.5" Foreground="{StaticResource MutedBrush}" Margin="0,10,0,0" TextWrapping="Wrap" />
+                        <TextBlock FontSize="11.5" Foreground="{StaticResource AccentBrush}" Margin="0,8,0,0" TextWrapping="Wrap"
+                                   Text="Системный прокси не покрывает QUIC/HTTP3 - для YouTube, Discord и игр включите TUN-режим." />
                         <Button x:Name="DownloadCoreButton" Style="{StaticResource GhostButtonStyle}" Margin="0,10,0,0"
                                 Click="DownloadCore_Click" Content="Скачать ядро sing-box" />
                     </StackPanel>
