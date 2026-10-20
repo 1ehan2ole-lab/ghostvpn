@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Регистрация — GhostVPN</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="container auth-card">
+    <a class="brand" href="/" style="justify-content:center;margin-bottom:22px">
+      <span class="ghost-logo">👻</span>
+      <span class="accent" data-site-name>GhostVPN</span>
+    </a>
+
+    <div class="card">
+      <h1 style="font-size:1.6rem">Регистрация</h1>
+      <p class="small">Аккаунт создаётся сразу — ключ и подписка появятся в кабинете.</p>
+
+      <div class="alert alert-error" id="alert"></div>
+      <div class="alert alert-ok" id="ok"></div>
+
+      <form id="registerForm" autocomplete="on">
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input class="input" id="email" name="email" type="email" placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="username">Имя пользователя</label>
+          <input class="input" id="username" name="username" placeholder="ghost_user" required autocomplete="username">
+          <div class="hint">Латиница, цифры и символы . _ - @</div>
+        </div>
+        <div class="field">
+          <label for="password">Пароль</label>
+          <input class="input" id="password" name="password" type="password" placeholder="минимум 8 символов" required autocomplete="new-password">
+        </div>
+        <div class="field hidden" id="inviteField">
+          <label for="invite">Инвайт-код</label>
+          <input class="input" id="invite" name="invite" placeholder="GHOST-XXXXXX">
+        </div>
+        <button class="btn btn-block" id="submitBtn" type="submit">Создать аккаунт</button>
+      </form>
+
+      <p class="small mt-3 mb-0" style="text-align:center">
+        Уже есть аккаунт? <a href="/login" style="color:var(--brand-2)">Войти</a>
+      </p>
+    </div>
+
+    <p class="center small muted mt-3"><a href="/">← На главную</a></p>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+(function () {
+  'use strict';
+  const form = document.getElementById('registerForm');
+  const alertBox = document.getElementById('alert');
+  const okBox = document.getElementById('ok');
+  const btn = document.getElementById('submitBtn');
+  const inviteField = document.getElementById('inviteField');
+
+  Ghost.api('/api/config').then(function (cfg) {
+    if (cfg.inviteRequired) {
+      inviteField.classList.remove('hidden');
+    }
+    if (!cfg.registrationOpen) {
+      alertBox.textContent = 'Регистрация временно закрыта.';
+      alertBox.classList.add('show');
+      btn.disabled = true;
+    }
+  }).catch(function () {});
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    alertBox.classList.remove('show');
+    okBox.classList.remove('show');
+    btn.disabled = true;
+    btn.textContent = 'Создаём...';
+    try {
+      await Ghost.api('/api/auth/register', {
+        method: 'POST',
+        body: {
+          email: email.value,
+          username: username.value,
+          password: password.value,
+          invite: inviteField.classList.contains('hidden') ? '' : document.getElementById('invite').value,
+        },
+      });
+      okBox.textContent = 'Готово! Перенаправляем в кабинет...';
+      okBox.classList.add('show');
+      setTimeout(function () { location.href = '/dashboard'; }, 600);
+    } catch (err) {
+      alertBox.textContent = err.message || 'Не удалось зарегистрироваться';
+      alertBox.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Создать аккаунт';
+    }
+  });
+})();
+</script>
+</body>
+</html>

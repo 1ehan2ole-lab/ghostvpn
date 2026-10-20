@@ -1,0 +1,35 @@
+{
+  "name": "ghostvpn",
+  "version": "1.0.0",
+  "description": "GhostVPN - self-hosted VPN panel with accounts, keys, subscriptions and a web interface",
+  "type": "module",
+  "main": "server/index.js",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server/index.js",
+    "dev": "node --disable-warning=ExperimentalWarning --watch server/index.js",
+    "setup": "node --disable-warning=ExperimentalWarning scripts/setup.js",
+    "xray:install": "node scripts/install-xray.js",
+    "xray:restart": "node --disable-warning=ExperimentalWarning scripts/xray-control.js restart",
+    "xray:stop": "node --disable-warning=ExperimentalWarning scripts/xray-control.js stop",
+    "xray:start": "node --disable-warning=ExperimentalWarning scripts/xray-control.js start",
+    "xray:status": "node --disable-warning=ExperimentalWarning scripts/xray-control.js status",
+    "test": "node --disable-warning=ExperimentalWarning --test \"test/*.test.js\""
+  },
+  "keywords": [
+    "vpn",
+    "vless",
+    "reality",
+    "xray",
+    "panel",
+    "subscription"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^4.21.2",
+    "qrcode": "^1.5.4"
+  }
+}

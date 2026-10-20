@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Приложения — GhostVPN</title>
+<meta name="description" content="Клиенты для VPN: Windows, macOS, Android, iOS, Linux и роутеров.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="/">
+      <span class="ghost-logo">👻</span>
+      <span class="accent" data-site-name>GhostVPN</span>
+    </a>
+    <button class="btn btn-ghost btn-sm nav-toggle" aria-label="Меню">☰</button>
+    <nav class="nav-links">
+      <a href="/">Главная</a>
+      <a href="/docs">Документация</a>
+      <span data-auth-links class="row gap-sm"></span>
+    </nav>
+  </div>
+</header>
+
+<main class="container page-head">
+  <div class="section-head">
+    <h1>Приложения</h1>
+    <p>Ключ из кабинета импортируется в любой из этих клиентов — в один клик.</p>
+  </div>
+
+  <div class="grid grid-3">
+    <div class="feature">
+      <div class="icon">🪟</div>
+      <h3>Hiddify (Windows / macOS / Linux)</h3>
+      <p>Самый простой клиент: вставьте ссылку подписки — и готово. Поддерживает TUN-режим (весь трафик).</p>
+      <a class="btn btn-ghost btn-sm" href="https://hiddify.com/" target="_blank" rel="noopener">hiddify.com</a>
+    </div>
+    <div class="feature">
+      <div class="icon">🧩</div>
+      <h3>v2rayN (Windows)</h3>
+      <p>Классический десктопный клиент с подписками, правилами маршрутизации и профилями.</p>
+      <a class="btn btn-ghost btn-sm" href="https://github.com/2dust/v2rayN/releases/latest" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="feature">
+      <div class="icon">📲</div>
+      <h3>v2rayNG (Android)</h3>
+      <p>Лёгкий Android-клиент: импорт ссылки или сканирование QR-кода.</p>
+      <a class="btn btn-ghost btn-sm" href="https://github.com/2dust/v2rayNG/releases/latest" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="feature">
+      <div class="icon">🍏</div>
+      <h3>Streisand (iOS / Android)</h3>
+      <p>Простой и аккуратный клиент, импорт по QR-коду из кабинета.</p>
+      <a class="btn btn-ghost btn-sm" href="https://apps.apple.com/app/streisand/id6458861203" target="_blank" rel="noopener">App Store</a>
+    </div>
+    <div class="feature">
+      <div class="icon">🧊</div>
+      <h3>Nekoray (Windows / macOS / Linux)</h3>
+      <p>Продвинутый клиент с гибкой маршрутизацией и импортом подписок.</p>
+      <a class="btn btn-ghost btn-sm" href="https://github.com/MatsuriDayo/nekoray/releases/latest" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="feature">
+      <div class="icon">📦</div>
+      <h3>sing-box</h3>
+      <p>CLI и GUI (SFA) — для продвинутых пользователей, роутеров и серверов.</p>
+      <a class="btn btn-ghost btn-sm" href="https://sing-box.sagernet.org/" target="_blank" rel="noopener">sing-box.sagernet.org</a>
+    </div>
+  </div>
+
+  <div class="card mt-4">
+    <h2>Как подключить</h2>
+    <ol class="muted" style="padding-left:20px;line-height:2">
+      <li>Установите любой клиент из списка выше.</li>
+      <li>Откройте <a href="/dashboard" style="color:var(--brand-2)">личный кабинет</a> и скопируйте ссылку подписки.</li>
+      <li>В клиенте выберите «Добавить подписку» / «Import from clipboard» и вставьте ссылку.</li>
+      <li>Нажмите «Подключиться». В Hiddify и v2rayN включите системный прокси или TUN-режим, чтобы трафик шёл через VPN.</li>
+    </ol>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container spread wrap">
+    <div class="small">© <span id="year"></span> <span data-site-name>GhostVPN</span></div>
+    <div class="footer-links"><a href="/">Главная</a><a href="/docs">Документация</a></div>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="assets/js/app.js"></script>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

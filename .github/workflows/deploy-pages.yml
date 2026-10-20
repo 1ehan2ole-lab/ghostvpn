@@ -1,0 +1,57 @@
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Сборка статического сайта
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Подготовка сайта
+        run: |
+          mkdir -p _site
+          cp -r web/* _site/
+          # Адрес панели берётся из переменной репозитория PANEL_URL
+          # (Settings -> Secrets and variables -> Actions -> Variables).
+          PANEL_URL="${{ vars.PANEL_URL }}"
+          if [ -n "$PANEL_URL" ]; then
+            cat > _site/config.js <<EOF
+          window.GHOSTVPN_API_BASE = '${PANEL_URL}';
+          window.GHOSTVPN_PANEL_URL = '${PANEL_URL}';
+          EOF
+          fi
+          # В статической версии недоступны серверные страницы кабинета
+          rm -f _site/dashboard.html _site/admin.html _site/login.html _site/register.html
+
+      - name: Настройка Pages
+        uses: actions/configure-pages@v5
+
+      - name: Сборка артефакта
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    name: Публикация
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

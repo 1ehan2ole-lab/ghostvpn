@@ -1,0 +1,38 @@
+name: Bug report
+description: Сообщить об ошибке
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Что произошло
+      placeholder: Опишите проблему и шаги воспроизведения
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Логи
+      render: shell
+      description: Вывод панели и Xray (без приватных ключей)
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Версии
+      placeholder: GhostVPN 1.0.0 / Xray 26.3.27 / Ubuntu 24.04
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Проверено
+      options:
+        - label: Проблема не связана с настройкой провайдера или сети
+          required: true
+        - label: Я удалил приватные ключи и данные аккаунтов из логов
+          required: true

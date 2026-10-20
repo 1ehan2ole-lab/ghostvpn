@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Документация — GhostVPN</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="/">
+      <span class="ghost-logo">👻</span>
+      <span class="accent" data-site-name>GhostVPN</span>
+    </a>
+    <button class="btn btn-ghost btn-sm nav-toggle" aria-label="Меню">☰</button>
+    <nav class="nav-links">
+      <a href="/">Главная</a>
+      <a href="/download">Приложения</a>
+      <span data-auth-links class="row gap-sm"></span>
+    </nav>
+  </div>
+</header>
+
+<main class="container page-head">
+  <div class="section-head">
+    <h1>Документация</h1>
+    <p>Установка, настройка и эксплуатация собственного VPN на сервере.</p>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h2>1. Требования</h2>
+      <ul class="muted" style="padding-left:20px;line-height:1.9">
+        <li>VPS: Ubuntu 22.04 / Debian 12 (1 vCPU, 1 ГБ RAM достаточно)</li>
+        <li>Публичный IP-адрес и открытые порты <code>443</code> и <code>80</code></li>
+        <li>Node.js 22+ и root-доступ для установки Xray</li>
+      </ul>
+
+      <h2>2. Установка</h2>
+      <pre class="code">git clone https://github.com/&lt;user&gt;/ghostvpn.git
+cd ghostvpn
+cp .env.example .env
+npm install
+npm run xray:install
+npm start</pre>
+      <p class="small">При первом запуске панель создаст администратора и напечатает его пароль в консоль. Данные можно задать заранее в <code>.env</code> (ADMIN_EMAIL, ADMIN_PASSWORD).</p>
+
+      <h2>3. Reverse proxy</h2>
+      <pre class="code">server {
+    listen 443 ssl http2;
+    server_name vpn.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/vpn.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/vpn.example.com/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}</pre>
+      <p class="small">В <code>.env</code> укажите <code>PUBLIC_URL=https://vpn.example.com</code> и <code>TRUST_PROXY=1</code>.</p>
+    </div>
+
+    <div class="stack gap-lg">
+      <div class="card">
+        <h2>4. Docker</h2>
+        <pre class="code">git clone https://github.com/&lt;user&gt;/ghostvpn.git
+cd ghostvpn
+cp .env.example .env
+docker compose up -d
+docker compose logs -f</pre>
+        <p class="small">Образ собирает Xray и панель в одном контейнере, порт VPN пробрасывается через <code>network_mode: host</code>.</p>
+      </div>
+
+      <div class="card">
+        <h2>5. Команды</h2>
+        <pre class="code">npm start            # запустить панель
+npm run dev          # режим разработки
+npm run xray:install # скачать ядро Xray
+npm run xray:restart # перезапустить Xray
+npm test             # тесты</pre>
+      </div>
+
+      <div class="card">
+        <h2>6. Структура</h2>
+        <pre class="code">server/     бэкенд (Express + SQLite)
+  routes/    API: auth, me, admin, sub
+  xray.js    управление ядром и статистика
+web/        статический сайт и кабинеты
+scripts/    установка Xray, служебные утилиты
+data/       база, конфиг Xray, логи (в .gitignore)</pre>
+      </div>
+
+      <div class="card">
+        <h2>7. Частые проблемы</h2>
+        <details class="acc">
+          <summary>Клиент не подключается</summary>
+          <p class="small">Проверьте, что порт из настроек открыт на файрволе, SNI совпадает с destination, а ключ REALITY не перевыпускался после генерации конфига.</p>
+        </details>
+        <details class="acc">
+          <summary>Трафик не считается</summary>
+          <p class="small">Ядро Xray должно быть запущено с включённым API (127.0.0.1:10085). Счётчики обновляются каждые 30 секунд.</p>
+        </details>
+        <details class="acc">
+          <summary>Не открывается порт 443</summary>
+          <p class="small">На Windows и Linux для привязки к порту 443 нужны права root/администратора.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container spread wrap">
+    <div class="small">© <span id="year"></span> <span data-site-name>GhostVPN</span></div>
+    <div class="footer-links"><a href="/">Главная</a><a href="/download">Приложения</a></div>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="assets/js/app.js"></script>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

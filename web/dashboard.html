@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Кабинет — GhostVPN</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="/">
+      <span class="ghost-logo">👻</span>
+      <span class="accent" data-site-name>GhostVPN</span>
+    </a>
+    <button class="btn btn-ghost btn-sm nav-toggle" aria-label="Меню">☰</button>
+    <nav class="nav-links">
+      <a href="/dashboard">Кабинет</a>
+      <a href="/download">Приложения</a>
+      <a href="/docs">Документация</a>
+      <span data-auth-links class="row gap-sm"></span>
+    </nav>
+  </div>
+</header>
+
+<main class="container page-head">
+  <div class="spread wrap">
+    <div>
+      <h1 style="font-size:1.9rem;margin-bottom:4px">Привет, <span id="userName">—</span></h1>
+      <p class="small" id="userEmail">—</p>
+    </div>
+    <div class="row gap-sm" id="statusBadge"></div>
+  </div>
+
+  <div class="grid grid-4 mt-3">
+    <div class="card stat-card">
+      <span>Статус доступа</span>
+      <b id="statStatus">—</b>
+      <div id="statStatusNote" class="small muted">—</div>
+    </div>
+    <div class="card stat-card">
+      <span>Трафик</span>
+      <b id="statTraffic">—</b>
+      <div class="meter mt-1" id="trafficMeter"><i style="width:0%"></i></div>
+      <div class="small muted mt-1" id="statTrafficNote">—</div>
+    </div>
+    <div class="card stat-card">
+      <span>Окончание доступа</span>
+      <b id="statExpiry">—</b>
+      <div class="small muted mt-1" id="statExpiryNote">—</div>
+    </div>
+    <div class="card stat-card">
+      <span>Устройства онлайн</span>
+      <b id="statOnline">—</b>
+      <div class="small muted mt-1" id="statOnlineNote">—</div>
+    </div>
+  </div>
+
+  <div class="grid mt-3" style="grid-template-columns:1.25fr .75fr;gap:20px" id="mainGrid">
+    <div class="stack gap-lg">
+      <section class="card">
+        <div class="spread">
+          <h2 style="font-size:1.25rem;margin:0">Ваш ключ</h2>
+          <button class="btn btn-ghost btn-sm" id="rotateBtn">Перевыпустить</button>
+        </div>
+        <p class="small">Скопируйте ссылку или отсканируйте QR-код в приложении.</p>
+
+        <div class="key-box" id="keyBox">
+          <span class="grow" id="keyText">загрузка...</span>
+          <button class="btn btn-sm" id="copyKey">Копировать</button>
+        </div>
+
+        <div class="row mt-3 gap-lg wrap" style="align-items:flex-start">
+          <div class="qr"><img id="qrImage" alt="QR-код ключа" width="190" height="190"></div>
+          <div class="grow">
+            <h3 style="font-size:.95rem">Параметры подключения</h3>
+            <dl class="kv" id="connParams"></dl>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 style="font-size:1.25rem">Подписки</h2>
+        <p class="small">Импортируйте ссылку в клиент — все сервера обновятся автоматически.</p>
+        <div class="stack gap-sm" id="subList"></div>
+      </section>
+    </div>
+
+    <div class="stack gap-lg">
+      <section class="card">
+        <h2 style="font-size:1.15rem">Все ссылки</h2>
+        <p class="small">Резервные short-id для надёжного подключения.</p>
+        <div class="stack gap-sm" id="linkList"></div>
+      </section>
+
+      <section class="card">
+        <h2 style="font-size:1.15rem">Безопасность</h2>
+        <div class="field">
+          <label for="currentPassword">Текущий пароль</label>
+          <input class="input" id="currentPassword" type="password" autocomplete="current-password">
+        </div>
+        <div class="field">
+          <label for="newPassword">Новый пароль</label>
+          <input class="input" id="newPassword" type="password" autocomplete="new-password">
+        </div>
+        <button class="btn btn-ghost btn-block" id="passBtn">Сменить пароль</button>
+      </section>
+
+      <section class="card">
+        <h2 style="font-size:1.15rem">Подключить устройство</h2>
+        <p class="small">Установите клиент и добавьте ключ из раздела «Ваш ключ».</p>
+        <a class="btn btn-ghost btn-block" href="/download">Список приложений</a>
+        <a class="btn btn-ghost btn-block mt-2" href="/docs">Инструкция по настройке</a>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container spread wrap">
+    <div class="small">© <span id="year"></span> <span data-site-name>GhostVPN</span></div>
+    <div class="footer-links"><a href="/docs">Документация</a><a href="/download">Приложения</a></div>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/dashboard.js"></script>
+</body>
+</html>

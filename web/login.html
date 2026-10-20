@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вход — GhostVPN</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="container auth-card">
+    <a class="brand" href="/" style="justify-content:center;margin-bottom:22px">
+      <span class="ghost-logo">👻</span>
+      <span class="accent" data-site-name>GhostVPN</span>
+    </a>
+
+    <div class="card">
+      <h1 style="font-size:1.6rem">Вход в аккаунт</h1>
+      <p class="small">Введите e-mail или имя пользователя.</p>
+
+      <div class="alert alert-error" id="alert"></div>
+
+      <form id="loginForm" autocomplete="on">
+        <div class="field">
+          <label for="login">Логин</label>
+          <input class="input" id="login" name="login" placeholder="you@example.com" required autocomplete="username">
+        </div>
+        <div class="field">
+          <label for="password">Пароль</label>
+          <input class="input" id="password" name="password" type="password" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button class="btn btn-block" id="submitBtn" type="submit">Войти</button>
+      </form>
+
+      <p class="small mt-3 mb-0" style="text-align:center">
+        Нет аккаунта? <a href="/register" style="color:var(--brand-2)">Зарегистрироваться</a>
+      </p>
+    </div>
+
+    <p class="center small muted mt-3"><a href="/">← На главную</a></p>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+(function () {
+  'use strict';
+  const form = document.getElementById('loginForm');
+  const alertBox = document.getElementById('alert');
+  const btn = document.getElementById('submitBtn');
+
+  function fail(message) {
+    alertBox.textContent = message;
+    alertBox.classList.add('show');
+  }
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    alertBox.classList.remove('show');
+    btn.disabled = true;
+    btn.textContent = 'Входим...';
+    try {
+      const res = await Ghost.api('/api/auth/login', {
+        method: 'POST',
+        body: { login: login.value, password: password.value },
+      });
+      const next = new URLSearchParams(location.search).get('next');
+      location.href = next ? decodeURIComponent(next) : (res.user && res.user.role === 'admin' ? '/admin' : '/dashboard');
+    } catch (err) {
+      fail(err.message || 'Не удалось войти');
+      btn.disabled = false;
+      btn.textContent = 'Войти';
+    }
+  });
+})();
+</script>
+</body>
+</html>

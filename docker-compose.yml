@@ -1,0 +1,17 @@
+services:
+  ghostvpn:
+    build: .
+    container_name: ghostvpn
+    # network_mode: host нужен, чтобы Xray слушал 443/tcp напрямую
+    # и чтобы не было двойного NAT для VPN-клиентов.
+    network_mode: host
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

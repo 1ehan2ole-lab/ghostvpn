@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+
+# runtime data (database, generated xray config, logs)
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# xray core binaries & geo databases (downloaded by scripts/install-xray.js)
+vendor/
+xray/
+!xray/.gitkeep
+
+# secrets
+.env
+.env.local
+
+# logs
+logs/
+*.log
+npm-debug.log*
+cookies.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

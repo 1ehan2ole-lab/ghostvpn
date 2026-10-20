@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Админ-панель — GhostVPN</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="/">
+      <span class="ghost-logo">👻</span>
+      <span class="accent" data-site-name>GhostVPN</span>
+    </a>
+    <button class="btn btn-ghost btn-sm nav-toggle" aria-label="Меню">☰</button>
+    <nav class="nav-links">
+      <a href="/dashboard">Кабинет</a>
+      <a href="/admin">Админ</a>
+      <span data-auth-links class="row gap-sm"></span>
+    </nav>
+  </div>
+</header>
+
+<main class="container page-head">
+  <div class="spread wrap">
+    <div>
+      <h1 style="font-size:1.9rem;margin-bottom:4px">Панель администратора</h1>
+      <p class="small">Управление аккаунтами, ключами, трафиком и сервером.</p>
+    </div>
+    <div class="row gap-sm">
+      <button class="btn btn-ghost btn-sm" id="reloadClientsBtn">Обновить клиентов</button>
+      <button class="btn btn-sm" id="restartXrayBtn">Перезапустить Xray</button>
+    </div>
+  </div>
+
+  <div class="grid grid-4 mt-3">
+    <div class="card stat-card"><span>Аккаунтов</span><b id="statUsers">—</b><div class="small muted" id="statUsersNote">—</div></div>
+    <div class="card stat-card"><span>Активных</span><b id="statActive">—</b><div class="small muted" id="statActiveNote">—</div></div>
+    <div class="card stat-card"><span>Онлайн</span><b id="statOnline">—</b><div class="small muted" id="statOnlineNote">—</div></div>
+    <div class="card stat-card"><span>Трафик</span><b id="statTraffic">—</b><div class="small muted" id="statTrafficNote">—</div></div>
+  </div>
+
+  <div class="tabs mt-4">
+    <button class="tab active" data-tab="users">Пользователи</button>
+    <button class="tab" data-tab="settings">Настройки</button>
+    <button class="tab" data-tab="invites">Инвайты</button>
+    <button class="tab" data-tab="events">События</button>
+    <button class="tab" data-tab="server">Сервер</button>
+  </div>
+
+  <section id="tab-users">
+    <div class="spread wrap mb-0" style="margin-bottom:16px">
+      <input class="input" id="searchInput" placeholder="Поиск по e-mail или имени" style="max-width:320px">
+      <button class="btn" id="newUserBtn">+ Создать аккаунт</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Аккаунт</th>
+            <th>Статус</th>
+            <th>Трафик</th>
+            <th>Доступ до</th>
+            <th>Онлайн</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody id="usersBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tab-settings" class="hidden">
+    <div class="grid grid-2">
+      <div class="card">
+        <h2 style="font-size:1.15rem">Сервер</h2>
+        <div class="field">
+          <label>Порт VPN</label>
+          <input class="input" id="set_port" type="number">
+        </div>
+        <div class="field">
+          <label>REALITY SNI</label>
+          <input class="input" id="set_sni" placeholder="www.microsoft.com">
+        </div>
+        <div class="field">
+          <label>REALITY destination</label>
+          <input class="input" id="set_dest" placeholder="www.microsoft.com:443">
+        </div>
+        <div class="field">
+          <label>Fingerprint</label>
+          <select class="select" id="set_fp">
+            <option value="chrome">chrome</option>
+            <option value="firefox">firefox</option>
+            <option value="safari">safari</option>
+            <option value="ios">ios</option>
+            <option value="android">android</option>
+            <option value="edge">edge</option>
+            <option value="random">random</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Уровень логов Xray</label>
+          <select class="select" id="set_log">
+            <option value="warning">warning</option>
+            <option value="info">info</option>
+            <option value="error">error</option>
+            <option value="none">none</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:1.15rem">Сайт</h2>
+        <div class="field">
+          <label>Название</label>
+          <input class="input" id="set_name">
+        </div>
+        <div class="field">
+          <label>Слоган</label>
+          <input class="input" id="set_tagline">
+        </div>
+        <div class="field">
+          <label>Ссылка на поддержку</label>
+          <input class="input" id="set_support">
+        </div>
+        <div class="field">
+          <label>Валюта</label>
+          <input class="input" id="set_currency">
+        </div>
+        <div class="grid grid-2" style="gap:12px">
+          <div class="field"><label>Цена 1 мес.</label><input class="input" id="set_price_1m" type="number" step="0.01"></div>
+          <div class="field"><label>Цена 3 мес.</label><input class="input" id="set_price_3m" type="number" step="0.01"></div>
+          <div class="field"><label>Цена 6 мес.</label><input class="input" id="set_price_6m" type="number" step="0.01"></div>
+          <div class="field"><label>Цена 12 мес.</label><input class="input" id="set_price_12m" type="number" step="0.01"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:1.15rem">Политика</h2>
+        <div class="field">
+          <label>Регистрация</label>
+          <select class="select" id="set_reg">
+            <option value="1">Открыта</option>
+            <option value="0">Закрыта</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Инвайт обязателен</label>
+          <select class="select" id="set_inv">
+            <option value="0">Нет</option>
+            <option value="1">Да</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Лимит устройств на аккаунт</label>
+          <input class="input" id="set_devices" type="number" min="0">
+        </div>
+        <div class="field">
+          <label>Трафик нового аккаунта (ГБ, 0 = без лимита)</label>
+          <input class="input" id="set_traffic" type="number" min="0" step="1">
+        </div>
+        <div class="field">
+          <label>Срок нового аккаунта (дней, 0 = бессрочно)</label>
+          <input class="input" id="set_trial" type="number" min="0">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:1.15rem">Действия</h2>
+        <p class="small">Изменения применяются сразу и перезаписывают конфигурацию Xray.</p>
+        <button class="btn btn-block" id="saveSettings">Сохранить настройки</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-invites" class="hidden">
+    <div class="card">
+      <div class="spread wrap mb-0" style="margin-bottom:16px">
+        <div>
+          <h2 style="font-size:1.15rem;margin:0">Инвайт-коды</h2>
+          <p class="small" style="margin:0">Ограничивают регистрацию и выдаются вручную.</p>
+        </div>
+        <div class="row gap-sm">
+          <input class="input" id="inviteCode" placeholder="код (необязательно)">
+          <input class="input" id="inviteUses" type="number" value="1" min="1" style="width:90px">
+          <button class="btn" id="createInviteBtn">Создать</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Код</th><th>Использований</th><th>Создан</th><th></th></tr></thead>
+          <tbody id="invitesBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-events" class="hidden">
+    <div class="card">
+      <h2 style="font-size:1.15rem">Журнал событий</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Время</th><th>Тип</th><th>Событие</th><th>IP</th></tr></thead>
+          <tbody id="eventsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-server" class="hidden">
+    <div class="grid grid-2">
+      <div class="card">
+        <h2 style="font-size:1.15rem">Ядро Xray</h2>
+        <dl class="kv" id="serverInfo"></dl>
+        <div class="row gap-sm mt-3">
+          <button class="btn btn-ghost" id="restartXrayBtn2">Перезапустить</button>
+          <button class="btn btn-ghost" id="reloadClientsBtn2">Обновить клиентов</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2 style="font-size:1.15rem">REALITY</h2>
+        <dl class="kv" id="realityInfo"></dl>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-backdrop" id="userModal">
+  <div class="modal">
+    <h2 style="font-size:1.2rem" id="modalTitle">Новый аккаунт</h2>
+    <div class="alert alert-error" id="modalAlert"></div>
+    <form id="userForm">
+      <input type="hidden" id="f_id">
+      <div class="field"><label>E-mail</label><input class="input" id="f_email" required></div>
+      <div class="field"><label>Имя пользователя</label><input class="input" id="f_username" required></div>
+      <div class="field"><label>Пароль <span class="muted small" id="passHint">(минимум 8 символов)</span></label><input class="input" id="f_password" type="text"></div>
+      <div class="grid grid-2" style="gap:12px">
+        <div class="field"><label>Роль</label>
+          <select class="select" id="f_role"><option value="user">Пользователь</option><option value="admin">Администратор</option></select>
+        </div>
+        <div class="field"><label>Статус</label>
+          <select class="select" id="f_status"><option value="active">Активен</option><option value="disabled">Отключён</option></select>
+        </div>
+        <div class="field"><label>Трафик, ГБ (0 = без лимита)</label><input class="input" id="f_traffic" type="number" min="0" value="0"></div>
+        <div class="field"><label>Устройств</label><input class="input" id="f_devices" type="number" min="0" value="3"></div>
+        <div class="field"><label>Доступ до (дней, 0 = бессрочно)</label><input class="input" id="f_days" type="number" min="0" value="0"></div>
+        <div class="field"><label>Заметка</label><input class="input" id="f_note"></div>
+      </div>
+      <div class="row gap-sm mt-2">
+        <button class="btn grow" type="submit" id="modalSubmit">Сохранить</button>
+        <button class="btn btn-ghost" type="button" id="modalCancel">Отмена</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container spread wrap">
+    <div class="small">© <span id="year"></span> <span data-site-name>GhostVPN</span></div>
+    <div class="footer-links"><a href="/dashboard">Кабинет</a></div>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GhostVPN — приватный и быстрый VPN</title>
+<meta name="description" content="GhostVPN — собственный VPN-сервис на базе VLESS + REALITY. Своя панель, аккаунты, ключи и подписки для всех устройств.">
+<meta property="og:title" content="GhostVPN — приватный и быстрый VPN">
+<meta property="og:description" content="Собственный VPN: панель управления, аккаунты, ключи и подписки.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="/">
+      <span class="ghost-logo">👻</span>
+      <span class="accent" data-site-name>GhostVPN</span>
+    </a>
+    <button class="btn btn-ghost btn-sm nav-toggle" aria-label="Меню">☰</button>
+    <nav class="nav-links">
+      <a href="#features">Возможности</a>
+      <a href="#pricing">Тарифы</a>
+      <a href="/download">Приложения</a>
+      <a href="/docs">Документация</a>
+      <span data-auth-links class="row gap-sm"></span>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow"><i class="pulse-dot"></i> VLESS + REALITY · без логов · свои ключи</span>
+        <h1>Приватный VPN<br><span>без компромиссов</span></h1>
+        <p style="font-size:1.05rem;max-width:540px">
+          Полноценная VPN-панель: аккаунты, персональные ключи, подписки для всех устройств,
+          учёт трафика и админка. Всё работает на вашем сервере — ни один провайдер не видит ваш трафик.
+        </p>
+        <div class="hero-cta">
+          <a class="btn" href="/register">Создать аккаунт</a>
+          <a class="btn btn-ghost" href="/docs">Как подключиться</a>
+        </div>
+        <div class="hero-stats" id="heroStats">
+          <div><b data-stat="users">—</b><span>аккаунтов</span></div>
+          <div><b data-stat="active">—</b><span>активных</span></div>
+          <div><b data-stat="online">—</b><span>онлайн сейчас</span></div>
+          <div><b data-stat="uptime">—</b><span>аптайм панели</span></div>
+        </div>
+      </div>
+
+      <div class="mock">
+        <div class="mock-bar"><i></i><i></i><i></i><span class="small muted" style="margin-left:10px">ghostvpn://dashboard</span></div>
+        <div class="mock-body">
+          <div class="mock-row"><b>🇩🇪 Frankfurt, DE</b><span class="badge badge-ok">пинг 18 мс</span></div>
+          <div class="mock-row"><b>🔒 Защита соединения</b><span class="toggle"></span></div>
+          <div class="mock-row"><b>Трафик за месяц</b><span>12.4 / 100 ГБ</span></div>
+          <div class="mock-row"><b>VLESS · REALITY</b><span class="badge badge-brand">подключено</span></div>
+          <div class="mock-row"><b>Ключ</b><span class="mono small">b8c1••••••••9f2a</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container">
+    <div class="strip">
+      <div><b>0 логов</b><span>мы не храним историю</span></div>
+      <div><b>REALITY</b><span>защита от блокировок</span></div>
+      <div><b>Multi-device</b><span>до 3 устройств сразу</span></div>
+      <div><b>24/7</b><span>стабильный аптайм</span></div>
+    </div>
+  </section>
+
+  <section class="section" id="features">
+    <div class="container">
+      <div class="section-head center">
+        <h2>Всё, что нужно для VPN-сервиса</h2>
+        <p>Панель, ключи, подписки, трафик и админка — из коробки.</p>
+      </div>
+      <div class="grid grid-3">
+        <div class="feature">
+          <div class="icon">🔑</div>
+          <h3>Личные ключи</h3>
+          <p>Каждому аккаунту — уникальный UUID. Ключ можно перевыпустить в один клик, старый перестаёт работать мгновенно.</p>
+        </div>
+        <div class="feature">
+          <div class="icon">📱</div>
+          <h3>Универсальные подписки</h3>
+          <p>Форматы v2ray, Clash, sing-box и ссылка vless:// — импортируются в Hiddify, v2rayN, Nekoray, Streisand и другие клиенты.</p>
+        </div>
+        <div class="feature">
+          <div class="icon">📊</div>
+          <h3>Учёт трафика</h3>
+          <p>Реальное потребление снимается с ядра Xray, лимиты и сроки действия отслеживаются автоматически.</p>
+        </div>
+        <div class="feature">
+          <div class="icon">🛡️</div>
+          <h3>VLESS + REALITY</h3>
+          <p>Трафик выглядит как обычный HTTPS к легитимному сайту — блокировки и DPI не видят разницы.</p>
+        </div>
+        <div class="feature">
+          <div class="icon">⚙️</div>
+          <h3>Админ-панель</h3>
+          <p>Создание аккаунтов, лимиты, продление, инвайты, журнал событий и управление сервером.</p>
+        </div>
+        <div class="feature">
+          <div class="icon">🚀</div>
+          <h3>Легко развернуть</h3>
+          <p>Одна команда на сервере, Docker-образ и подробная документация. Свой VPN поднимается за 10 минут.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="pricing">
+    <div class="container">
+      <div class="section-head center">
+        <h2>Тарифы</h2>
+        <p>Оплата подписки продлевает доступ и снимает лимит трафика.</p>
+      </div>
+      <div class="grid grid-4" id="pricingGrid"></div>
+      <p class="center small muted mt-3">
+        Оплата картой, криптой или через Telegram. Напишите в поддержку, чтобы активировать подписку.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="grid grid-2 gap-lg" style="align-items:center">
+        <div>
+          <h2>Приложение для любого устройства</h2>
+          <p>Один и тот же ключ работает на телефоне, ноутбуке, роутере и Smart TV. Сканируйте QR-код в кабинете — и готово.</p>
+          <div class="hero-cta">
+            <a class="btn" href="/download">Скачать клиенты</a>
+            <a class="btn btn-ghost" href="/docs">Инструкция</a>
+          </div>
+        </div>
+        <div class="grid grid-2" style="gap:12px">
+          <div class="card card-tight"><b>Windows</b><div class="small muted">Hiddify · v2rayN</div></div>
+          <div class="card card-tight"><b>macOS</b><div class="small muted">Hiddify · V2Box</div></div>
+          <div class="card card-tight"><b>Android</b><div class="small muted">Hiddify · v2rayNG</div></div>
+          <div class="card card-tight"><b>iOS</b><div class="small muted">Streisand · V2Box</div></div>
+          <div class="card card-tight"><b>Linux</b><div class="small muted">Nekoray · sing-box</div></div>
+          <div class="card card-tight"><b>Роутер</b><div class="small muted">OpenWrt · Keenetic</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head center"><h2>Частые вопросы</h2></div>
+      <div style="max-width:760px;margin:0 auto">
+        <details class="acc" open>
+          <summary>Какие протоколы используются?</summary>
+          <p class="small">VLESS с шифрованием REALITY (XTLS Vision). Трафик замаскирован под обычное TLS-соединение к популярному сайту, поэтому его сложно заблокировать по сигнатуре.</p>
+        </details>
+        <details class="acc">
+          <summary>Могут ли отследить, что я делаю?</summary>
+          <p class="small">Сервер не ведёт журналов посещённых сайтов. Метаданные о ваших подключениях живут только в памяти ядра и обнуляются при перезапуске.</p>
+        </details>
+        <details class="acc">
+          <summary>Сколько устройств можно подключить?</summary>
+          <p class="small">По умолчанию — 3 одновременных устройства на аккаунт. Лимит настраивается администратором.</p>
+        </details>
+        <details class="acc">
+          <summary>Как оплатить подписку?</summary>
+          <p class="small">Напишите в поддержку с вашим e-mail — аккаунт продлится, а лимит трафика снимется.</p>
+        </details>
+        <details class="acc">
+          <summary>Можно ли развернуть GhostVPN на своём сервере?</summary>
+          <p class="small">Да, это open-source проект. Достаточно VPS с Ubuntu/Debian, выполнить инструкцию из раздела «Документация» — и у вас будет собственная панель.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="container" style="padding-bottom:20px">
+    <div class="card center" style="background:linear-gradient(140deg,rgba(124,92,255,.28),rgba(12,14,28,.9))">
+      <h2 style="margin-bottom:8px">Готовы попробовать?</h2>
+      <p>Регистрация занимает минуту. Ключ и подписка появятся сразу после входа.</p>
+      <a class="btn" href="/register">Создать аккаунт</a>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container spread wrap">
+    <div>
+      <div class="brand" style="margin-bottom:6px">
+        <span class="ghost-logo" style="width:32px;height:32px;font-size:16px;border-radius:9px">👻</span>
+        <span class="accent" data-site-name>GhostVPN</span>
+      </div>
+      <div class="small">© <span id="year"></span> GhostVPN. Проект с открытым кодом.</div>
+    </div>
+    <div class="footer-links">
+      <a href="/docs">Документация</a>
+      <a href="/download">Приложения</a>
+      <a href="/login">Вход</a>
+      <a href="/admin">Панель администратора</a>
+    </div>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/landing.js"></script>
+</body>
+</html>
