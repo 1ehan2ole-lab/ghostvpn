@@ -61,6 +61,23 @@ CREATE TABLE IF NOT EXISTS invites (
   created_at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS payments (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id    INTEGER NOT NULL,
+  plan       TEXT    NOT NULL,
+  days       INTEGER NOT NULL DEFAULT 30,
+  amount     REAL    NOT NULL DEFAULT 0,
+  currency   TEXT    NOT NULL DEFAULT '$',
+  status     TEXT    NOT NULL DEFAULT 'pending',
+  comment    TEXT    NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL,
+  paid_at    INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_payments_user   ON payments(user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+
 CREATE INDEX IF NOT EXISTS idx_sessions_user   ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_events_user     ON events(user_id);
 CREATE INDEX IF NOT EXISTS idx_events_created  ON events(created_at);
@@ -274,4 +291,56 @@ export function consumeInvite(code) {
   if (invite.used >= invite.max_uses) return { ok: false, reason: 'exhausted' };
   getDb().prepare('UPDATE invites SET used = used + 1 WHERE code = ?').run(String(code));
   return { ok: true };
+}
+
+/* ------------------------------------------------------------------ */
+/* Payments                                                            */
+/* ------------------------------------------------------------------ */
+
+export function createPayment(payment) {
+  const info = getDb()
+    .prepare(
+      `INSERT INTO payments (user_id, plan, days, amount, currency, status, comment, created_at, paid_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .run(
+      Number(payment.userId),
+      payment.plan,
+      Number(payment.days || 30),
+      Number(payment.amount || 0),
+      payment.currency || '$',
+      payment.status || 'pending',
+      payment.comment || '',
+      Date.now(),
+      0,
+    );
+  return findPayment(info.lastInsertRowid);
+}
+
+export const findPayment = (id) =>
+  getDb().prepare('SELECT * FROM payments WHERE id = ?').get(Number(id));
+
+export const listPayments = () =>
+  getDb()
+    .prepare(
+      `SELECT p.*, u.email, u.username FROM payments p
+       LEFT JOIN users u ON u.id = p.user_id
+       ORDER BY p.created_at DESC`,
+    )
+    .all();
+
+export const listUserPayments = (userId) =>
+  getDb()
+    .prepare('SELECT * FROM payments WHERE user_id = ? ORDER BY created_at DESC')
+    .all(Number(userId));
+
+export function updatePayment(id, patch) {
+  const allowed = ['status', 'comment', 'paid_at', 'days', 'amount'];
+  const keys = Object.keys(patch).filter((k) => allowed.includes(k));
+  if (!keys.length) return findPayment(id);
+  const sql = keys.map((k) => `${k} = ?`).join(', ');
+  getDb()
+    .prepare(`UPDATE payments SET ${sql} WHERE id = ?`)
+    .run(...keys.map((k) => patch[k]), Number(id));
+  return findPayment(id);
 }

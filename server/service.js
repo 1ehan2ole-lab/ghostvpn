@@ -5,6 +5,8 @@ import { config } from './config.js';
 import {
   countAdmins,
   countUsers,
+  createPayment,
+  findPayment,
   findUserByEmail,
   findUserById,
   findUserByUsername,
@@ -12,6 +14,7 @@ import {
   listUsers,
   logEvent,
   setSetting,
+  updatePayment,
   updateUser,
 } from './db.js';
 import {
@@ -25,6 +28,7 @@ import {
 } from './util.js';
 import { buildSubToken } from './subscription.js';
 import { diffStats, fetchUserStats, reloadClients, resetCounters } from './xray.js';
+import { rt } from './runtime.js';
 
 /* ------------------------------------------------------------------ */
 /* User creation                                                       */
@@ -219,6 +223,48 @@ export function adminUser(user) {
     hasPassword: Boolean(user.password_hash),
     lastSeenIp: user.last_seen_ip,
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Payments                                                            */
+/* ------------------------------------------------------------------ */
+
+/** Create a renewal request from the user cabinet. */
+export function createPaymentRequest(user, planId) {
+  const plans = rt().plans;
+  const plan = plans[planId];
+  if (!plan) throw new ServiceError('Неизвестный тариф', 400, 'bad_plan');
+  const prices = rt().prices;
+  const amount = Number(prices[planId] || 0);
+  const payment = createPayment({
+    userId: user.id,
+    plan: planId,
+    days: plan.days,
+    amount,
+    currency: rt().currency,
+    status: 'pending',
+  });
+  logEvent('payment_created', `Заявка на оплату тарифа ${plan.label}`, { userId: user.id });
+  return payment;
+}
+
+/** Mark a payment as paid and apply it to the account. */
+export async function approvePayment(payment) {
+  const user = findUserById(payment.user_id);
+  if (!user) throw new ServiceError('Пользователь не найден', 404, 'not_found');
+  const base = user.expires_at > Date.now() ? user.expires_at : Date.now();
+  const expiresAt = base + Number(payment.days || 30) * 86400000;
+  updateUser(user.id, {
+    expires_at: expiresAt,
+    status: 'active',
+    traffic_used: 0,
+  });
+  updatePayment(payment.id, { status: 'paid', paid_at: Date.now() });
+  logEvent('payment_paid', `Оплачен тариф ${payment.plan} (+${payment.days} дн.)`, {
+    userId: user.id,
+  });
+  await reloadClients().catch(() => {});
+  return findUserById(user.id);
 }
 
 export { verifyPassword, hashPassword };

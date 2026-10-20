@@ -3,12 +3,13 @@
  */
 import express from 'express';
 import QRCode from 'qrcode';
-import { config } from '../config.js';
 import { requireAuth } from '../auth.js';
-import { effectiveStatus, publicUser } from '../service.js';
+import { listUserPayments } from '../db.js';
+import { ServiceError, createPaymentRequest, effectiveStatus, publicUser } from '../service.js';
 import { buildUserLinks } from '../subscription.js';
 import { ensureRealityKeys, onlineCount, onlineIps } from '../xray.js';
 import { daysLeft, formatDate, toGb } from '../util.js';
+import { rt } from '../runtime.js';
 
 const router = express.Router();
 
@@ -98,6 +99,39 @@ router.get('/key', async (req, res) => {
   } catch (err) {
     console.error('[key]', err);
     res.status(500).json({ error: 'error', message: 'Не удалось получить ключ' });
+  }
+});
+
+/** GET /api/me/plans - доступные тарифы. */
+router.get('/plans', (req, res) => {
+  const runtime = rt();
+  res.json({
+    ok: true,
+    currency: runtime.currency,
+    plans: Object.values(runtime.plans).map((plan) => ({
+      ...plan,
+      price: Number(runtime.prices[plan.id] || 0),
+    })),
+  });
+});
+
+/** GET /api/me/payments - заявки на оплату пользователя. */
+router.get('/payments', (req, res) => {
+  res.json({ ok: true, payments: listUserPayments(req.user.id) });
+});
+
+/** POST /api/me/payments - создать заявку на продление. */
+router.post('/payments', (req, res) => {
+  try {
+    const plan = String(req.body?.plan || '');
+    const payment = createPaymentRequest(req.user, plan);
+    res.status(201).json({ ok: true, payment });
+  } catch (err) {
+    const status = err instanceof ServiceError ? err.status : 500;
+    res.status(status).json({
+      error: err.code || 'error',
+      message: status === 500 ? 'Внутренняя ошибка' : err.message,
+    });
   }
 });
 

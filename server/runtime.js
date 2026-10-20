@@ -36,6 +36,12 @@ export function rt() {
     deviceLimit: num(s.device_limit, config.deviceLimit),
     defaultTrafficGb: num(s.default_traffic_gb, config.defaultTrafficGb),
     trialDays: num(s.trial_days, config.trialDays),
+    plans: {
+      '1m': { id: '1m', label: '1 месяц', days: num(s.plan_1m_days, 30) },
+      '3m': { id: '3m', label: '3 месяца', days: num(s.plan_3m_days, 90) },
+      '6m': { id: '6m', label: '6 месяцев', days: num(s.plan_6m_days, 180) },
+      '12m': { id: '12m', label: '12 месяцев', days: num(s.plan_12m_days, 365) },
+    },
   };
   cache = { at: Date.now(), value };
   return value;

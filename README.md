@@ -27,6 +27,7 @@ GhostVPN — self-hosted VPN-сервис на базе ядра [Xray-core](htt
 | 📡 Подписки | `vless://`, base64, Clash/Mihomo YAML, sing-box JSON, QR-код |
 | 📊 Трафик | Реальный учёт с ядра Xray, лимиты, срок действия, автоотключение |
 | 🛠 Админка | Пользователи, лимиты, продление, инвайты, настройки, журнал, управление Xray |
+| 💳 Оплата | Заявки на продление из кабинета → подтверждение в админке (продление + сброс трафика) |
 | 🔒 Безопасность | scrypt-пароли, httpOnly-сессии, CSRF-защита, rate-limit, ACL |
 | 🐳 Деплой | Docker/docker-compose, systemd-совместимый запуск, GitHub Actions |
 
@@ -170,6 +171,9 @@ HTTPS-трафиком. XTLS Vision снижает накладные расхо
 | `GET` | `/api/me` | Профиль, ключ, трафик, подписки |
 | `GET` | `/api/me/key` | Ключ в текстовом виде |
 | `GET` | `/api/me/qr.png` | QR-код ключа (PNG) |
+| `GET` | `/api/me/plans` | Доступные тарифы |
+| `GET` | `/api/me/payments` | Заявки на оплату пользователя |
+| `POST` | `/api/me/payments` | Создать заявку на продление |
 | `GET` | `/sub/:token` | Подписка (base64) |
 | `GET` | `/sub/:token?format=clash` | Clash / Mihomo YAML |
 | `GET` | `/sub/:token?format=singbox` | sing-box JSON |
@@ -184,6 +188,9 @@ HTTPS-трафиком. XTLS Vision снижает накладные расхо
 | `POST` | `/api/admin/users/:id/reset-traffic` | Сбросить трафик (admin) |
 | `POST` | `/api/admin/users/:id/rotate-key` | Перевыпустить ключ (admin) |
 | `GET/PUT` | `/api/admin/settings` | Настройки панели (admin) |
+| `GET` | `/api/admin/payments` | Заявки на оплату (admin) |
+| `POST` | `/api/admin/payments/:id/paid` | Подтвердить оплату (admin) |
+| `POST` | `/api/admin/payments/:id/reject` | Отклонить заявку (admin) |
 | `POST` | `/api/admin/xray/restart` | Перезапуск Xray (admin) |
 | `POST` | `/api/admin/xray/reload` | Обновить клиентов без рестарта (admin) |
 

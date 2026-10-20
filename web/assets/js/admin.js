@@ -289,6 +289,49 @@
     await loadInvites();
   });
 
+  async function loadPayments() {
+    const res = await Ghost.api('/api/admin/payments');
+    const body = document.getElementById('paymentsBody');
+    const labels = {
+      pending: ['ожидает', 'badge-warn'],
+      paid: ['оплачено', 'badge-ok'],
+      rejected: ['отклонено', 'badge-err'],
+    };
+    body.innerHTML = res.payments.length
+      ? res.payments.map((p) => {
+          const item = labels[p.status] || [p.status, 'badge'];
+          const actions = p.status === 'pending'
+            ? '<button class="btn btn-sm" data-pay="paid" data-id="' + p.id + '">Подтвердить</button>' +
+              '<button class="btn btn-sm btn-ghost" data-pay="rejected" data-id="' + p.id + '">Отклонить</button>'
+            : '';
+          return (
+            '<tr><td class="small muted nowrap">' + Ghost.datetime(p.created_at) + '</td>' +
+            '<td>' + Ghost.escape(p.email || '—') + '</td>' +
+            '<td>' + Ghost.escape(p.plan) + ' · ' + p.days + ' дн.</td>' +
+            '<td>' + p.amount + ' ' + Ghost.escape(p.currency) + '</td>' +
+            '<td><span class="badge ' + item[1] + '">' + item[0] + '</span></td>' +
+            '<td><div class="row gap-sm">' + actions + '</div></td></tr>'
+          );
+        }).join('')
+      : '<tr><td colspan="6" class="muted center">Заявок нет</td></tr>';
+  }
+
+  document.getElementById('paymentsBody').addEventListener('click', async function (e) {
+    const btn = e.target.closest('[data-pay]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-id');
+    const action = btn.getAttribute('data-pay');
+    if (action === 'rejected' && !confirm('Отклонить заявку?')) return;
+    try {
+      await Ghost.api('/api/admin/payments/' + id + '/' + action, { method: 'POST' });
+      Ghost.toast(action === 'paid' ? 'Оплата подтверждена' : 'Заявка отклонена', 'ok');
+      await loadPayments();
+      await loadUsers();
+    } catch (err) {
+      Ghost.toast(err.message || 'Ошибка', 'err');
+    }
+  });
+
   /* -------------------------------------------------------------- */
   /* tabs & actions                                                  */
   /* -------------------------------------------------------------- */
@@ -298,9 +341,10 @@
       document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
       tab.classList.add('active');
       const name = tab.getAttribute('data-tab');
-      ['users', 'settings', 'invites', 'events', 'server'].forEach(function (key) {
+      ['users', 'payments', 'settings', 'invites', 'events', 'server'].forEach(function (key) {
         document.getElementById('tab-' + key).classList.toggle('hidden', key !== name);
       });
+      if (name === 'payments') await loadPayments();
       if (name === 'settings') await loadSettings();
       if (name === 'invites') await loadInvites();
       if (name === 'events') await loadEvents();

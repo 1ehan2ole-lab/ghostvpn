@@ -45,6 +45,7 @@
 
   <div class="tabs mt-4">
     <button class="tab active" data-tab="users">Пользователи</button>
+    <button class="tab" data-tab="payments">Платежи</button>
     <button class="tab" data-tab="settings">Настройки</button>
     <button class="tab" data-tab="invites">Инвайты</button>
     <button class="tab" data-tab="events">События</button>
@@ -70,6 +71,19 @@
         </thead>
         <tbody id="usersBody"></tbody>
       </table>
+    </div>
+  </section>
+
+  <section id="tab-payments" class="hidden">
+    <div class="card">
+      <h2 style="font-size:1.15rem">Заявки на оплату</h2>
+      <p class="small">Подтверждение оплаты продлевает доступ аккаунта и сбрасывает трафик.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Дата</th><th>Аккаунт</th><th>Тариф</th><th>Сумма</th><th>Статус</th><th></th></tr></thead>
+          <tbody id="paymentsBody"></tbody>
+        </table>
+      </div>
     </div>
   </section>
 

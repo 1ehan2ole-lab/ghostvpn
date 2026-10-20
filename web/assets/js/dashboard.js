@@ -99,11 +99,47 @@
     }
   }
 
+  async function loadPlans() {
+    try {
+      const res = await Ghost.api('/api/me/plans');
+      const list = document.getElementById('planList');
+      if (!list) return;
+      list.innerHTML = res.plans.map(function (plan) {
+        return (
+          '<button class="btn btn-ghost btn-sm" data-plan="' + Ghost.escape(plan.id) + '">' +
+          Ghost.escape(plan.label) + '<br><span class="small muted">' + Ghost.escape(res.currency) +
+          plan.price + ' · ' + plan.days + ' дн.</span></button>'
+        );
+      }).join('');
+    } catch (e) { /* ignore */ }
+  }
+
+  async function loadPayments() {
+    try {
+      const res = await Ghost.api('/api/me/payments');
+      const box = document.getElementById('myPayments');
+      if (!box) return;
+      if (!res.payments.length) { box.innerHTML = ''; return; }
+      const labels = { pending: ['ожидает оплаты', 'badge-warn'], paid: ['оплачено', 'badge-ok'], rejected: ['отклонено', 'badge-err'] };
+      box.innerHTML = res.payments.slice(0, 5).map(function (p) {
+        const item = labels[p.status] || [p.status, 'badge'];
+        return (
+          '<div class="mock-row" style="gap:8px">' +
+          '<div class="grow"><b class="small">' + Ghost.escape(p.plan) + ' · ' + p.amount + ' ' + Ghost.escape(p.currency) + '</b>' +
+          '<div class="small muted">' + Ghost.datetime(p.created_at) + '</div></div>' +
+          '<span class="badge ' + item[1] + '">' + item[0] + '</span></div>'
+        );
+      }).join('');
+    } catch (e) { /* ignore */ }
+  }
+
   document.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('year').textContent = new Date().getFullYear();
     const user = await Ghost.requireUser();
     if (!user) return;
     await load();
+    await loadPlans();
+    await loadPayments();
 
     document.getElementById('copyKey').addEventListener('click', function () {
       if (data) Ghost.copy(data.key.primary, 'Ключ скопирован');
@@ -112,6 +148,20 @@
     document.addEventListener('click', function (e) {
       const btn = e.target.closest('[data-copy]');
       if (btn) Ghost.copy(btn.getAttribute('data-copy'), 'Скопировано');
+    });
+
+    document.addEventListener('click', async function (e) {
+      const planBtn = e.target.closest('[data-plan]');
+      if (!planBtn) return;
+      planBtn.disabled = true;
+      try {
+        await Ghost.api('/api/me/payments', { method: 'POST', body: { plan: planBtn.getAttribute('data-plan') } });
+        Ghost.toast('Заявка на оплату создана', 'ok');
+        await loadPayments();
+      } catch (err) {
+        Ghost.toast(err.message || 'Не удалось создать заявку', 'err');
+      }
+      planBtn.disabled = false;
     });
 
     document.getElementById('rotateBtn').addEventListener('click', async function () {

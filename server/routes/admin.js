@@ -8,15 +8,25 @@ import {
   createInvite,
   deleteInvite,
   deleteUser,
+  findPayment,
   findUserById,
   listEvents,
   listInvites,
+  listPayments,
   listUsers,
   logEvent,
   setSetting,
+  updatePayment,
   updateUser,
 } from '../db.js';
-import { ServiceError, adminUser, createUser, effectiveStatus, refreshStatus } from '../service.js';
+import {
+  ServiceError,
+  adminUser,
+  approvePayment,
+  createUser,
+  effectiveStatus,
+  refreshStatus,
+} from '../service.js';
 import { GB, randomTag, randomUuid, toGb } from '../util.js';
 import { buildSubToken } from '../subscription.js';
 import {
@@ -346,6 +356,32 @@ router.post('/me/refresh-key', async (req, res) => {
   });
   await reloadClients().catch(() => {});
   logEvent('key_rotated', 'Ключ перевыпущен', { userId: req.user.id, ip: req.ip });
+  res.json({ ok: true });
+});
+
+/* ------------------------------------------------------------------ */
+/* Payments                                                            */
+/* ------------------------------------------------------------------ */
+
+router.get('/payments', (req, res) => {
+  res.json({ ok: true, payments: listPayments() });
+});
+
+router.post('/payments/:id/paid', async (req, res) => {
+  const payment = findPayment(req.params.id);
+  if (!payment) return res.status(404).json({ error: 'not_found', message: 'Заявка не найдена' });
+  if (payment.status === 'paid') {
+    return res.status(400).json({ error: 'already_paid', message: 'Заявка уже оплачена' });
+  }
+  const user = await approvePayment(payment);
+  logEvent('payment_paid', `Заявка #${payment.id} подтверждена`, { userId: user.id, ip: req.ip });
+  res.json({ ok: true, user: adminUser(user) });
+});
+
+router.post('/payments/:id/reject', (req, res) => {
+  const payment = findPayment(req.params.id);
+  if (!payment) return res.status(404).json({ error: 'not_found', message: 'Заявка не найдена' });
+  updatePayment(payment.id, { status: 'rejected', comment: String(req.body?.comment || '') });
   res.json({ ok: true });
 });
 
