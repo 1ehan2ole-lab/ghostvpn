@@ -27,7 +27,7 @@ import {
   effectiveStatus,
  } from '../service.js';
 import { GB, randomTag, randomUuid, toGb } from '../util.js';
-import { buildSubToken, buildUserLinks } from '../subscription.js';
+import { buildSubToken, buildUserLinks, getPanelBaseUrl } from '../subscription.js';
 import { detectLanIp } from '../subscription.js';
 import {
   ensureRealityKeys,
@@ -517,7 +517,7 @@ router.post('/batch-keys', async (req, res) => {
           uuid: user.vless_uuid,
           status: user.status,
           key: links.primary,
-          subscription: `${rt().publicUrl || `http://localhost:${config.port}`}/sub/${user.sub_token}`,
+          subscription: `${rt().publicUrl || getPanelBaseUrl(req)}/sub/${user.sub_token}`,
           expiresAt: user.expires_at,
           days,
           trafficLimitGb: trafficGb,
@@ -584,7 +584,7 @@ router.get('/export', async (req, res) => {
       '',
       u.status,
       links.primary,
-      `${rt().publicUrl || `http://localhost:${config.port}`}/sub/${u.sub_token}`,
+      `${rt().publicUrl || getPanelBaseUrl(req)}/sub/${u.sub_token}`,
       u.expires_at ? new Date(u.expires_at).toISOString().slice(0, 10) : '',
       toGb(u.traffic_limit),
       toGb(u.traffic_used),

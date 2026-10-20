@@ -6,7 +6,7 @@ import QRCode from 'qrcode';
 import { requireAuth } from '../auth.js';
 import { listUserPayments } from '../db.js';
 import { ServiceError, createPaymentRequest, effectiveStatus, publicUser } from '../service.js';
-import { buildUserLinks } from '../subscription.js';
+import { buildUserLinks, getPanelBaseUrl } from '../subscription.js';
 import { ensureRealityKeys, onlineCount, onlineIps } from '../xray.js';
 import { daysLeft, formatDate, toGb } from '../util.js';
 import { rt } from '../runtime.js';
@@ -52,15 +52,18 @@ router.get('/', async (req, res) => {
         shortId: links.shortId,
         fingerprint: links.fingerprint,
       },
-      subscription: {
-        url: `/sub/${user.sub_token}`,
-        links: [
-          { name: 'v2rayN / v2rayNG / Hiddify', url: `/sub/${user.sub_token}` },
-          { name: 'Clash / Clash Meta', url: `/sub/${user.sub_token}?format=clash` },
-          { name: 'sing-box', url: `/sub/${user.sub_token}?format=singbox` },
-          { name: 'JSON (raw)', url: `/sub/${user.sub_token}?format=json` },
-        ],
-      },
+      subscription: (() => {
+        const base = getPanelBaseUrl(req);
+        return {
+          url: `${base}/sub/${user.sub_token}`,
+          links: [
+            { name: 'v2rayN / v2rayNG / Hiddify', url: `${base}/sub/${user.sub_token}` },
+            { name: 'Clash / Clash Meta', url: `${base}/sub/${user.sub_token}?format=clash` },
+            { name: 'sing-box', url: `${base}/sub/${user.sub_token}?format=singbox` },
+            { name: 'JSON (raw)', url: `${base}/sub/${user.sub_token}?format=json` },
+          ],
+        };
+      })(),
       online: { sessions: online, ips },
     });
   } catch (err) {

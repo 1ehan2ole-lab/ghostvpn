@@ -48,33 +48,22 @@ export function createApp() {
   /* API                                                             */
   /* -------------------------------------------------------------- */
 
-  // Канонический хост: 127.0.0.1 и localhost должны давать одну и ту же сессию,
-  // иначе cookie из одного адреса не подходит другому и пользователя "кидает" на логин.
-  // API и подписки не трогаем - их забирают клиенты по точному адресу.
+  // Канонический хост нужен только когда задан публичный адрес (домен):
+  // тогда любой другой хост отправляем на него. Локальные адреса (localhost,
+  // 127.0.0.1) не трогаем - иначе в адресной строке прыгает на localhost.
   app.use((req, res, next) => {
+    if (!config.publicUrl) return next();
     const host = String(req.headers.host || '');
-    const port = config.port;
-    const [hostname] = host.split(':');
     let canonical = null;
-
-    if (config.publicUrl) {
-      try {
-        const publicHost = new URL(config.publicUrl).host;
-        if (publicHost && host !== publicHost) canonical = publicHost;
-      } catch {
-        /* некорректный PUBLIC_URL - игнорируем */
-      }
+    try {
+      const publicHost = new URL(config.publicUrl).host;
+      if (publicHost && host !== publicHost) canonical = publicHost;
+    } catch {
+      /* некорректный PUBLIC_URL - игнорируем */
     }
-    if (!canonical && ['127.0.0.1', 'localhost', '[::1]'].includes(hostname)) {
-      canonical = `localhost:${port}`;
-    }
-
     const isApiLike = req.path.startsWith('/api/') || req.path.startsWith('/sub/');
     if (canonical && req.method === 'GET' && !isApiLike) {
-      const target = `${req.protocol}://${canonical}${req.originalUrl}`;
-      if (target !== `${req.protocol}://${host}${req.originalUrl}`) {
-        return res.redirect(301, target);
-      }
+      return res.redirect(301, `${req.protocol}://${canonical}${req.originalUrl}`);
     }
     next();
   });

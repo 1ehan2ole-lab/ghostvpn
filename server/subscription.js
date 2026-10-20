@@ -48,6 +48,22 @@ export function detectLanIp() {
   return cachedLanIp;
 }
 
+/**
+ * Базовый адрес панели для ссылок подписки.
+ * Используется публичный адрес (домен) или IP машины в локальной сети,
+ * чтобы ссылка работала с телефона и других устройств.
+ */
+export function getPanelBaseUrl(req) {
+  const configured = rt().publicUrl;
+  if (configured) return configured.replace(/\/+$/, '');
+
+  const host = getPublicHost(req);
+  const scheme = req && String(req.headers['x-forwarded-proto'] || '').startsWith('https') ? 'https' : 'http';
+  const port = config.port;
+  const defaultPort = (scheme === 'https' && port === 443) || (scheme === 'http' && port === 80);
+  return `${scheme}://${host}${defaultPort ? '' : `:${port}`}`;
+}
+
 export function getPublicHost(req, { port } = {}) {
   const configured = rt().publicUrl;
   if (configured) {

@@ -69,7 +69,9 @@ test('registration issues a session and a key', async () => {
   assert.ok(me.data.key.uuid.length === 36);
   assert.ok(me.data.key.primary.startsWith('vless://'));
   assert.ok(me.data.key.links.length >= 1);
-  assert.ok(me.data.subscription.url.startsWith('/sub/'));
+  assert.ok(me.data.subscription.url.includes('/sub/'), 'ссылка подписки должна содержать /sub/');
+  assert.ok(me.data.subscription.links.length === 4);
+  assert.ok(me.data.key.primary.includes('://'), 'ключ должен быть абсолютной ссылкой');
 });
 
 test('duplicate registration is rejected', async () => {
