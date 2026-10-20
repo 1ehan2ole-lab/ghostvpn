@@ -142,7 +142,9 @@ final class AppModel: ObservableObject {
             ]
         }
         let session = URLSession(configuration: proxy)
-        if let text = try? await session.string(from: URL(string: "https://api.ipify.org")!) {
+        if let url = URL(string: "https://api.ipify.org"),
+           let (data, _) = try? await session.data(from: url),
+           let text = String(data: data, encoding: .utf8) {
             await MainActor.run { self.externalIP = text.trimmingCharacters(in: .whitespacesAndNewlines) }
         }
         #endif
