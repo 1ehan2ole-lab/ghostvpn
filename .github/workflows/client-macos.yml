@@ -52,7 +52,8 @@ jobs:
 
       - name: DMG
         run: |
-          hdiutil create -volname GhostVPN -srcfolder clients/dist/macos/GhostVPN.app -ov -format UDZO GhostVPN-macOS-arm64.dmg
+          APP="$(pwd)/clients/dist/macos/GhostVPN.app"
+          hdiutil create -volname "GhostVPN" -srcfolder "$APP" -ov -format UDZO "$(pwd)/GhostVPN-macOS-arm64.dmg"
 
       - uses: actions/upload-artifact@v4
         with:

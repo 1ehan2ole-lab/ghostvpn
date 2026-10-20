@@ -280,11 +280,13 @@ public final class SingBoxRunner {
     public static let version = "1.14.3"
 
     public var binaryPath: String {
-        let name = "sing-box"
-        return URL(fileURLWithPath: Bundle.main.bundlePath)
-            .appendingPathComponent("core")
-            .appendingPathComponent(name)
-            .path
+        let bundle = Bundle.main.bundlePath
+        let candidates = [
+            bundle + "/core/sing-box",
+            bundle + "/Contents/Resources/core/sing-box",
+            bundle + "/Contents/MacOS/core/sing-box",
+        ]
+        return candidates.first { FileManager.default.fileExists(atPath: $0) } ?? candidates[0]
     }
 
     public var isCorePresent: Bool { FileManager.default.fileExists(atPath: binaryPath) }
