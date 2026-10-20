@@ -38,6 +38,10 @@ GhostVPN — self-hosted VPN-сервис на базе ядра [Xray-core](htt
 
 ## Быстрый старт
 
+> Нужен сервер с публичным IP, работающий 24/7 — тогда VPN не зависит от вашего компьютера.
+> Бесплатные варианты (Oracle Cloud Always Free, свой Raspberry Pi дома) — в
+> **[deploy/FREE.md](deploy/FREE.md)**.
+
 ### Вариант 1 — Docker (рекомендуется)
 
 ```bash
