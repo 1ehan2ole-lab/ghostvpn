@@ -4,10 +4,8 @@
 import { config } from './config.js';
 import {
   countAdmins,
-  countUsers,
-  createPayment,
-  findPayment,
-  findUserByEmail,
+   createPayment,
+   findUserByEmail,
   findUserById,
   findUserByUsername,
   insertUser,
@@ -27,7 +25,7 @@ import {
   verifyPassword,
 } from './util.js';
 import { buildSubToken } from './subscription.js';
-import { diffStats, fetchUserStats, reloadClients, resetCounters } from './xray.js';
+import { diffStats, fetchUserStats, reloadClients } from './xray.js';
 import { rt } from './runtime.js';
 
 /* ------------------------------------------------------------------ */

@@ -25,16 +25,14 @@ import {
   approvePayment,
   createUser,
   effectiveStatus,
-  refreshStatus,
-} from '../service.js';
+ } from '../service.js';
 import { GB, randomTag, randomUuid, toGb } from '../util.js';
 import { buildSubToken } from '../subscription.js';
 import {
   ensureRealityKeys,
   isRunning,
   lastXrayError,
-  onlineCount,
-  onlineUsers,
+   onlineUsers,
   reloadClients,
   restartXray,
   xrayPid,

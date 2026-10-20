@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config, ensureDirs } from '../server/config.js';
-import { initDb, findUserByEmail, getSetting, listUsers } from '../server/db.js';
+import { initDb, findUserByEmail, listUsers } from '../server/db.js';
 import { bootstrapAdmin, createUser, effectiveStatus } from '../server/service.js';
 import { ensureRealityKeys, writeXrayConfig } from '../server/xray.js';
 import { buildUserLinks } from '../server/subscription.js';
