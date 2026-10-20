@@ -32,11 +32,12 @@
       <form id="loginForm" autocomplete="on">
         <div class="field">
           <label for="login">Логин</label>
-          <input class="input" id="login" name="login" placeholder="you@example.com" required autocomplete="username">
+          <input class="input" id="login" name="login" placeholder="e-mail или имя пользователя" required autocomplete="username">
+          <div class="hint">Введите e-mail, на который регистрировались, или имя пользователя.</div>
         </div>
         <div class="field">
           <label for="password">Пароль</label>
-          <input class="input" id="password" name="password" type="password" placeholder="••••••••" required autocomplete="current-password">
+          <input class="input" id="password" name="password" type="password" placeholder="Ваш пароль" required autocomplete="current-password">
         </div>
         <button class="btn btn-block" id="submitBtn" type="submit">Войти</button>
       </form>
@@ -86,6 +87,12 @@
     alertBox.classList.add('show');
   }
 
+  // Запоминаем последний логин, чтобы не вводить его каждый раз.
+  try {
+    const saved = localStorage.getItem('ghostvpn_login');
+    if (saved) document.getElementById('login').value = saved;
+  } catch (e) { /* localStorage может быть недоступен */ }
+
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
     alertBox.classList.remove('show');
@@ -96,6 +103,7 @@
         method: 'POST',
         body: { login: login.value, password: password.value },
       });
+      try { localStorage.setItem('ghostvpn_login', login.value); } catch (e) { /* ignore */ }
       const next = safeNext();
       location.replace(next || (res.user && res.user.role === 'admin' ? '/admin' : '/dashboard'));
     } catch (err) {
