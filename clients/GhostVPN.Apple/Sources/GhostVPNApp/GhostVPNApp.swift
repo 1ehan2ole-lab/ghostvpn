@@ -192,6 +192,7 @@ final class AppModel: ObservableObject {
 
 // MARK: - Системный прокси (macOS)
 
+#if os(macOS)
 enum SystemProxy {
     static func enable(port: Int) {
         for service in services() {
@@ -234,3 +235,4 @@ enum SystemProxy {
         }
     }
 }
+#endif

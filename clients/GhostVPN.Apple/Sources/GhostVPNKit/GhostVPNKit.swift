@@ -275,6 +275,7 @@ public enum SingBoxConfigBuilder {
 
 // MARK: - Ядро sing-box
 
+#if os(macOS)
 public final class SingBoxRunner {
 
     public static let version = "1.14.3"
@@ -352,3 +353,18 @@ public final class SingBoxRunner {
 
     public var isRunning: Bool { process?.isRunning == true }
 }
+#else
+/// На iOS ядро запускается сетевым расширением, отдельного процесса нет.
+public final class SingBoxRunner {
+    public init() {}
+    public var binaryPath: String { "" }
+    public var isCorePresent: Bool { false }
+    public var isRunning: Bool { false }
+    public func start(configJSON: String) throws {
+        throw NSError(domain: "GhostVPN", code: 1,
+                      userInfo: [NSLocalizedDescriptionKey: "На iOS используется сетевое расширение"])
+    }
+    public func stop() {}
+    public static func downloadCore(progress: ((String) -> Void)? = nil) async throws {}
+}
+#endif
