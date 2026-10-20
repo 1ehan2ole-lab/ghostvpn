@@ -28,14 +28,30 @@ jobs:
           # Адрес панели берётся из переменной репозитория PANEL_URL
           # (Settings -> Secrets and variables -> Actions -> Variables).
           PANEL_URL="${{ vars.PANEL_URL }}"
-          if [ -n "$PANEL_URL" ]; then
-            cat > _site/config.js <<EOF
+          if [ -z "$PANEL_URL" ]; then PANEL_URL="http://localhost:8080"; fi
+          cat > _site/config.js <<EOF
           window.GHOSTVPN_API_BASE = '${PANEL_URL}';
           window.GHOSTVPN_PANEL_URL = '${PANEL_URL}';
           EOF
-          fi
-          # В статической версии недоступны серверные страницы кабинета
-          rm -f _site/dashboard.html _site/admin.html _site/login.html _site/register.html
+          # Серверные страницы (кабинет, вход, регистрация) заменяем
+          # на заглушку со ссылкой на панель.
+          for page in login register dashboard admin; do
+            cat > "_site/$page.html" <<EOF2
+          <!DOCTYPE html><html lang="ru"><head><meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>GhostVPN</title>
+          <link rel="stylesheet" href="assets/css/style.css"></head>
+          <body><div class="auth-wrap"><div class="container auth-card">
+          <div class="card center">
+          <div class="ghost-logo" style="margin:0 auto 18px">👻</div>
+          <h1 style="font-size:1.4rem">Панель GhostVPN</h1>
+          <p class="small">Кабинет, вход и регистрация доступны в панели.
+          Нажмите кнопку, чтобы перейти туда.</p>
+          <a class="btn" href="${PANEL_URL}/register">Зарегистрироваться</a>
+          <a class="btn btn-ghost mt-2" href="${PANEL_URL}/login">Войти</a>
+          </div></div></div></body></html>
+          EOF2
+          done
 
       - name: Настройка Pages
         uses: actions/configure-pages@v5

@@ -192,7 +192,13 @@
       }
       Ghost.registrationOpen = cfg.registrationOpen;
     } catch (e) {
-      /* offline / server restarting */
+      // Панель недоступна (например, статическая публикация) - оставляем кнопки входа.
+      const authLinks = document.querySelector('[data-auth-links]');
+      if (authLinks && !authLinks.textContent.trim()) {
+        authLinks.innerHTML =
+          '<a class="btn btn-ghost btn-sm" href="/login">Войти</a>' +
+          '<a class="btn btn-sm" href="/register">Начать</a>';
+      }
     }
   });
 })();
