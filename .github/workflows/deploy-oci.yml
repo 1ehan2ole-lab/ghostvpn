@@ -1,0 +1,178 @@
+name: Deploy to Oracle Cloud (free tier)
+
+# Создаёт бесплатный VPN-сервер в Oracle Cloud Always Free и ставит на него GhostVPN.
+# Один раз добавьте секреты репозитория (Settings -> Secrets and variables -> Actions):
+#   OCI_TENANCY_OCID       - OCID tenancy
+#   OCI_USER_OCID          - OCID пользователя (с правами на создание ресурсов)
+#   OCI_FINGERPRINT       - отпечаток ключа API (oci iam user)
+#   OCI_PRIVATE_KEY        - содержимое приватного ключа (.pem) в base64
+#   OCI_COMPARTMENT_OCID   - compartment (обычно равен tenancy OCID)
+# После первого запуска значения можно посмотреть в логах workflow.
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: 'Регион Oracle (например eu-frankfurt-1, amsterdam-1)'
+        default: 'eu-frankfurt-1'
+      ocpus:
+        description: 'OCPU (в рамках Always Free до 4 ядер суммарно на VM)'
+        default: '2'
+      memory_gb:
+        description: 'RAM в ГБ (Always Free до 24 ГБ суммарно)'
+        default: '12'
+      panel_port:
+        description: 'Порт панели'
+        default: '8080'
+      vpn_port:
+        description: 'Порт VPN'
+        default: '443'
+
+jobs:
+  provision:
+    name: Создать VM и поставить GhostVPN
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Установка OCI CLI
+        run: |
+          python3 -m pip install --quiet --upgrade oci
+          mkdir -p ~/.oci
+          echo "${{ secrets.OCI_PRIVATE_KEY }}" | base64 -d > /tmp/oci_key.pem
+          chmod 600 /tmp/oci_key.pem
+          cat > ~/.oci/config <<EOF
+          [DEFAULT]
+          user=${{ secrets.OCI_USER_OCID }}
+          fingerprint=${{ secrets.OCI_FINGERPRINT }}
+          tenancy=${{ secrets.OCI_TENANCY_OCID }}
+          region=${{ inputs.region }}
+          key_file=/tmp/oci_key.pem
+          EOF
+
+      - name: Проверка доступа
+        run: oci iam region-subscription list --query 'data[0].region_name' --raw-output
+
+      - name: Подготовка сети (VCN, subnet, security list)
+        id: network
+        run: |
+          set -euo pipefail
+          COMpartment="${{ secrets.OCI_COMPARTMENT_OCID || secrets.OCI_TENANCY_OCID }}"
+          VPN_PORT="${{ inputs.vpn_port }}"
+          PANEL_PORT="${{ inputs.panel_port }}"
+
+          VCN=$(oci compute vcn list --compartment-id "$Compartment" --query 'data[0].id' --raw-output)
+          if [ -z "$VCN" ] || [ "$VCN" = "null" ]; then
+            echo "Создаём VCN"
+            VCN=$(oci compute vcn create --compartment-id "$Compartment" --display-name ghostvpn \
+              --cidr-blocks 10.0.0.0/16 --dns-label ghostvpnp --wait-for-state AVAILABLE \
+              --query 'data.id' --raw-output)
+          fi
+          echo "VCN: $VCN"
+
+          SUBNET=$(oci compute subnet list --compartment-id "$Compartment" --vcn-id "$VCN" \
+            --query 'data[0].id' --raw-output)
+          if [ -z "$SUBNET" ] || [ "$SUBNET" = "null" ]; then
+            echo "Создаём subnet"
+            SUBNET=$(oci compute subnet create --compartment-id "$Compartment" --vcn-id "$VCN" \
+              --display-name ghostvpn --cidr-block 10.0.0.0/24 --dns-label ghostvpns \
+              --wait-for-state AVAILABLE --query 'data.id' --raw-output)
+          fi
+          echo "SUBNET: $SUBNET"
+
+          # Правила безопасности: SSH (только на время установки), VPN и панель
+          oci network security-list update --security-list-id "$SUBNET" \
+            --ingress-security-rules "$(cat <<JSON
+            [
+              {"source":"0.0.0.0/0","protocol":"6","tcp-options":{"max":6,"min":6},"destination":"0.0.0.0/0","port-range":{"max":22,"min":22}},
+              {"source":"0.0.0.0/0","protocol":"6","tcp-options":{"max":6,"min":6},"destination":"0.0.0.0/0","port-range":{"max":${VPN_PORT},"min":${VPN_PORT}}},
+              {"source":"0.0.0.0/0","protocol":"6","tcp-options":{"max":6,"min":6},"destination":"0.0.0.0/0","port-range":{"max":${PANEL_PORT},"min":${PANEL_PORT}}}
+            ]
+            JSON
+            )" >/dev/null
+          echo "Открыты порты: 22, ${VPN_PORT}, ${PANEL_PORT}"
+          echo "subnet=$SUBNET" >> "$GITHUB_OUTPUT"
+          echo "vnc=$VCN" >> "$GITHUB_OUTPUT"
+
+      - name: Генерация SSH-ключа
+        id: sshkey
+        run: |
+          ssh-keygen -t rsa -b 4096 -N "" -f /tmp/ghostvpn_key -C ghostvpn >/dev/null
+          pub=$(cat /tmp/ghostvpn_key.pub)
+          echo "pubkey<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$pub" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Создание VM (Always Free, ARM A1)
+        id: instance
+        run: |
+          set -euo pipefail
+          COMpartment="${{ secrets.OCI_COMPARTMENT_OCID || secrets.OCI_TENANCY_OCID }}"
+          OCPUS="${{ inputs.ocpus }}"
+          MEM="${{ inputs.memory_gb }}"
+
+          AD=$(oci compute availability-domain list --compartment-id "$Compartment" --query 'data[0].name' --raw-output)
+          IMAGE=$(oci compute image list --compartment-id "$Compartment" \
+            --query 'data[?`"os"=="Canonical Ubuntu"`&&`"architecture"=="aarch64"`].id[0]' --raw-output)
+          if [ -z "$IMAGE" ] || [ "$IMAGE" = "null" ]; then
+            IMAGE=$(oci compute image list --compartment-id "$Compartment" \
+              --query 'data[?`"os"=="Canonical Ubuntu"`&&`"architecture"=="aarch64"`&&`"display-name"=="Canonical Ubuntu 22.04"`].id[0]' --raw-output)
+          fi
+          echo "Image: $IMAGE"
+
+          oci compute instance launch --compartment-id "$Compartment" \
+            --availability-domain "$AD" \
+            --shape "VM.Standard.A1.Flex" \
+            --shape-config "{\"ocpus\":$OCPUS,\"memoryInGBs\":$MEM}" \
+            --source-details "{\"imageId\":\"$IMAGE\",\"sourceType\":\"image\"}" \
+            --subnet-id "${{ steps.network.outputs.subnet }}" \
+            --display-name ghostvpn \
+            --metadata "ssh_authorized_keys=${{ steps.sshkey.outputs.pubkey }}" \
+            --wait-for-state RUNNING \
+            --query 'data.id' --raw-output > /tmp/instance_id
+          echo "VM: $(cat /tmp/instance_id)"
+
+      - name: Получение публичного IP
+        id: ip
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            IP=$(oci compute instance list-vnics --instance-id "$(cat /tmp/instance_id)" \
+              --query 'data[0].public-ip' --raw-output)
+            if [ -n "$IP" ] && [ "$IP" != "null" ]; then break; fi
+            sleep 10
+          done
+          echo "ip=$IP" >> "$GITHUB_OUTPUT"
+          echo "Публичный IP: $IP"
+
+      - name: Установка GhostVPN
+        run: |
+          set -euo pipefail
+          IP="${{ steps.ip.outputs.ip }}"
+          chmod 600 /tmp/ghostvpn_key
+          for i in $(seq 1 30); do
+            if ssh -i /tmp/ghostvpn_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 ubuntu@"$IP" 'echo ready' 2>/dev/null; then
+              break
+            fi
+            echo "Ждём SSH ($i)..."
+            sleep 15
+          done
+          ssh -i /tmp/ghostvpn_key -o StrictHostKeyChecking=no ubuntu@"$IP" 'echo connected'
+          ssh -i /tmp/ghostvpn_key -o StrictHostKeyChecking=no ubuntu@"$IP" \
+            'sudo bash -c "curl -fsSL https://raw.githubusercontent.com/1ehan2ole-lab/ghostvpn/main/deploy/install.sh | bash"'
+
+      - name: Итог
+        run: |
+          IP="${{ steps.ip.outputs.ip }}"
+          echo "### GhostVPN развёрнут" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Панель: http://$IP:${{ inputs.panel_port }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- VPN: $IP:${{ inputs.vpn_port }} (VLESS/REALITY)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- В админке укажите публичный адрес: http://$IP:${{ inputs.panel_port }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Логи: ssh ubuntu@$IP 'sudo journalctl -u ghostvpn -f'" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Откройте панель, войдите админом (логин/пароль - в логе установки) и в разделе" >> "$GITHUB_STEP_SUMMARY"
+          echo "\"Сервер\" -> \"Адреса ноды\" укажите http://$IP:${{ inputs.panel_port }}." >> "$GITHUB_STEP_SUMMARY"

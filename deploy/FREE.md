@@ -13,6 +13,30 @@
 
 ## Вариант 1. Oracle Cloud Always Free (рекомендую)
 
+### Вариант 1а. Развернуть прямо из GitHub (без ручной работы с консолью)
+
+В репозитории есть воркфлоу **«Deploy to Oracle Cloud (free tier)»** — он сам создаёт VM,
+открывает порты, ставит GhostVPN и печатает адрес панели.
+
+1. Создайте API-ключ в Oracle: **User Settings → API Keys → Add API Key** (нужна пара
+   «指纹/fingerprint» + приватный ключ `.pem`).
+2. В GitHub: **Settings → Secrets and variables → Actions → New repository secret**:
+
+   | Secret | Значение |
+   |---|---|
+   | `OCI_TENANCY_OCID` | OCID tenancy (User → Tenancy) |
+   | `OCI_USER_OCID` | ваш User OCID |
+   | `OCI_FINGERPRINT` | fingerprint ключа |
+   | `OCI_PRIVATE_KEY` | приватный ключ, **в base64**: `base64 -w0 key.pem` |
+   | `OCI_COMPARTMENT_OCID` | OCID compartment (обычно = tenancy) |
+
+3. **Actions → Deploy to Oracle Cloud (free tier) → Run workflow** → выберите регион → жмите Run.
+4. В конце шага «Итог» будет ссылка на панель и адрес VPN.
+
+Проверить: https://github.com/1ehan2ole-lab/ghostvpn/actions/workflows/deploy-oci.yml
+
+### Вариант 1б. Вручную через консоль Oracle
+
 ### 1. Создать аккаунт и VM
 
 1. Регистрация: https://signup.cloud.oracle.com/ (нужна карта, списываний не будет — free tier).
