@@ -1,0 +1,75 @@
+name: Deploy to server (update)
+
+# Обновляет уже установленный GhostVPN на сервере одной кнопкой.
+# Нужен после каждого изменения в репозитории.
+#
+# Секреты репозитория (Settings -> Secrets and variables -> Actions):
+#   SERVER_HOST   - IP или домен сервера
+#   SERVER_USER   - ssh-пользователь (ubuntu / root / debian)
+#   SERVER_SSH_KEY - приватный SSH-ключ (base64)
+
+on:
+  workflow_dispatch:
+    inputs:
+      server:
+        description: 'IP или домен сервера (если пусто - берётся из секрета SERVER_HOST)'
+        required: false
+        default: ''
+      restart_xray:
+        description: 'Перезапустить Xray и перезалить клиентов'
+        type: boolean
+        default: true
+
+jobs:
+  deploy:
+    name: Обновление панели на сервере
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Подготовка SSH
+        run: |
+          set -euo pipefail
+          echo "${{ secrets.SERVER_SSH_KEY }}" | base64 -d > /tmp/server_key
+          chmod 600 /tmp/server_key
+          HOST="${{ inputs.server || secrets.SERVER_HOST }}"
+          USER_NAME="${{ secrets.SERVER_USER || 'ubuntu' }}"
+          if [ -z "$HOST" ]; then
+            echo "::error::Не указан адрес сервера (инпут или секрет SERVER_HOST)"
+            exit 1
+          fi
+          echo "HOST=$HOST" >> "$GITHUB_ENV"
+          echo "USER_NAME=$USER_NAME" >> "$GITHUB_ENV"
+
+      - name: Обновление кода и перезапуск
+        run: |
+          set -euo pipefail
+          ssh -i /tmp/server_key -o StrictHostKeyChecking=no -o ConnectTimeout=15 \
+            "$USER_NAME@$HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          DIR="${GHOSTVPN_DIR:-/opt/ghostvpn}"
+          cd "$DIR"
+          echo "==> git pull"
+          git pull --ff-only
+          echo "==> зависимости"
+          npm ci --omit=dev --no-audit --no-fund >/dev/null
+          echo "==> перезапуск панели"
+          sudo systemctl restart ghostvpn
+          sleep 5
+          systemctl is-active --quiet ghostvpn && echo "панель работает" || { journalctl -u ghostvpn -n 40; exit 1; }
+          REMOTE
+
+      - name: Перезагрузка клиентов Xray
+        if: ${{ inputs.restart_xray }}
+        run: |
+          ssh -i /tmp/server_key -o StrictHostKeyChecking=no "$USER_NAME@$HOST" \
+            "cd /opt/ghostvpn && sudo systemctl restart ghostvpn && sleep 4 && \
+             curl -s -o /dev/null -w 'панель: HTTP %{http_code}\n' http://127.0.0.1:8080/api/health"
+
+      - name: Итог
+        run: |
+          echo "### Обновление завершено" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Сервер: ${{ inputs.server || secrets.SERVER_HOST }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Панель: http://${{ inputs.server || secrets.SERVER_HOST }}:8080" >> "$GITHUB_STEP_SUMMARY"

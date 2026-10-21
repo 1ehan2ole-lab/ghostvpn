@@ -161,8 +161,10 @@ jobs:
             sleep 15
           done
           ssh -i /tmp/ghostvpn_key -o StrictHostKeyChecking=no ubuntu@"$IP" 'echo connected'
+          # Публичный адрес передаём сразу - в ключах и подписках будет он,
+          # а не localhost. Панель и VPN-порт в одном адресе.
           ssh -i /tmp/ghostvpn_key -o StrictHostKeyChecking=no ubuntu@"$IP" \
-            'sudo bash -c "curl -fsSL https://raw.githubusercontent.com/1ehan2ole-lab/ghostvpn/main/deploy/install.sh | bash"'
+            "sudo bash -c 'curl -fsSL https://raw.githubusercontent.com/1ehan2ole-lab/ghostvpn/main/deploy/install.sh | GHOSTVPN_PUBLIC_URL=http://$IP:${{ inputs.panel_port }} bash'"
 
       - name: Итог
         run: |

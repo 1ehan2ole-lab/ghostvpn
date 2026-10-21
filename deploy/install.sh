@@ -55,6 +55,19 @@ npm run xray:install >/dev/null
 chmod +x vendor/xray/xray
 ok "ядро: $(vendor/xray/xray version | head -n1)"
 
+# --- публичный адрес ------------------------------------------------------
+# Если передан - сразу прописываем его в .env и в настройки панели,
+# чтобы в ключах и подписках был не localhost, а реальный адрес ноды.
+PUBLIC_URL="${GHOSTVPN_PUBLIC_URL:-}"
+if [ -n "$PUBLIC_URL" ]; then
+  log "Публичный адрес: $PUBLIC_URL"
+  if grep -q '^PUBLIC_URL=' .env; then
+    sed -i "s|^PUBLIC_URL=.*|PUBLIC_URL=$PUBLIC_URL|" .env
+  else
+    echo "PUBLIC_URL=$PUBLIC_URL" >> .env
+  fi
+fi
+
 # --- порты ---------------------------------------------------------------
 VPN_PORT="$(grep -E '^SERVER_PORT=' .env | cut -d= -f2 || true)"
 VPN_PORT="${VPN_PORT:-443}"
@@ -94,12 +107,28 @@ systemctl restart ghostvpn
 sleep 6
 systemctl is-active --quiet ghostvpn && ok "служба запущена" || fail "служба не стартовала: journalctl -u ghostvpn -n 50"
 
+# Прописываем публичный адрес в настройки панели (через её же API/БД)
+if [ -n "$PUBLIC_URL" ]; then
+  (cd "$DIR" && PUBLIC_URL="$PUBLIC_URL" node -e "
+    import('./server/db.js').then(async (m) => {
+      m.initDb();
+      m.setSetting('public_url', process.env.PUBLIC_URL);
+      console.log('  публичный адрес сохранён: ' + process.env.PUBLIC_URL);
+      m.closeDb();
+    });
+  ") || true
+  systemctl restart ghostvpn
+  sleep 4
+fi
+
 IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 ok "установка завершена"
 echo
 printf '  Панель:  http://%s:%s\n' "${IP:-<IP-сервера>}" "${PANEL_PORT}"
 printf '  VPN:     %s:%s (VLESS/REALITY)\n' "${IP:-<IP-сервера>}" "${VPN_PORT}"
 printf '  Логи:    journalctl -u ghostvpn -f\n\n'
-printf '  ВАЖНО: в админке -> "Сервер" -> "Адреса ноды" укажите публичный адрес,\n'
-printf '  иначе в ключах и подписках останется %s.\n' "${IP:-localhost}"
-printf '  Затем перезапустите: systemctl restart ghostvpn\n\n'
+if [ -z "$PUBLIC_URL" ]; then
+  printf '  ВАЖНО: в админке -> "Сервер" -> "Адреса ноды" укажите публичный адрес,\n'
+  printf '  иначе в ключах и подписках останется %s.\n' "${IP:-localhost}"
+  printf '  Затем перезапустите: systemctl restart ghostvpn\n\n'
+fi
