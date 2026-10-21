@@ -16,10 +16,11 @@
 ### Вариант 1а. Развернуть прямо из GitHub (без ручной работы с консолью)
 
 В репозитории есть воркфлоу **«Deploy to Oracle Cloud (free tier)»** — он сам создаёт VM,
-открывает порты, ставит GhostVPN и печатает адрес панели.
+открывает порты, ставит GhostVPN **сразу с правильным публичным адресом** (в ключах и
+подписках будет IP сервера, а не localhost) и печатает адрес панели.
 
 1. Создайте API-ключ в Oracle: **User Settings → API Keys → Add API Key** (нужна пара
-   «指纹/fingerprint» + приватный ключ `.pem`).
+   «fingerprint» + приватный ключ `.pem`).
 2. В GitHub: **Settings → Secrets and variables → Actions → New repository secret**:
 
    | Secret | Значение |
@@ -30,10 +31,25 @@
    | `OCI_PRIVATE_KEY` | приватный ключ, **в base64**: `base64 -w0 key.pem` |
    | `OCI_COMPARTMENT_OCID` | OCID compartment (обычно = tenancy) |
 
-3. **Actions → Deploy to Oracle Cloud (free tier) → Run workflow** → выберите регион → жмите Run.
-4. В конце шага «Итог» будет ссылка на панель и адрес VPN.
+3. **Actions → Deploy to Oracle Cloud (free tier) → Run workflow** → выберите регион → Run.
+4. В сводке запуска будут адрес панели и адрес VPN.
 
 Проверить: https://github.com/1ehan2ole-lab/ghostvpn/actions/workflows/deploy-oci.yml
+
+### Вариант 1б. Обновление сервера из GitHub
+
+Когда в репозитории появляются изменения, обновить панель на сервере можно одной кнопкой:
+**Actions → Deploy to server (update) → Run workflow**.
+
+Секреты для него:
+
+| Secret | Значение |
+|---|---|
+| `SERVER_HOST` | IP или домен сервера |
+| `SERVER_USER` | `ubuntu` (или `root`) |
+| `SERVER_SSH_KEY` | приватный SSH-ключ в base64 |
+
+Воркфлоу выполнит `git pull`, переустановит зависимости и перезапустит службу.
 
 ### Вариант 1б. Вручную через консоль Oracle
 
